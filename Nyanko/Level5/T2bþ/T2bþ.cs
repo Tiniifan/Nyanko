@@ -154,7 +154,7 @@ namespace Nyanko.Level5.T2bþ
             }
 
             int nounEntryIndex = CfgBin.Entries.FindIndex(x => x.GetName() == "NOUN_INFO_BEGIN");
-            if (textEntryIndex >= 0)
+            if (nounEntryIndex >= 0)
             {
                 CfgBin.Entries[nounEntryIndex] = nounEntry;
             }
