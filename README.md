@@ -1,4 +1,4 @@
-# [Nyanko](https://github.com/Tiniifan/Nyanko/releases/tag/latest) <img src="https://github.com/Tiniifan/Nyanko/blob/main/Nyanko/Icon/Icon.png" alt="Logo" width="5%">
+# [Nyanko](https://github.com/Tiniifan/Nyanko/releases/latest) <img src="https://github.com/Tiniifan/Nyanko/blob/main/Nyanko/Icon/Icon.png" alt="Logo" width="5%">
 
 __________________________________________________________________________
 
