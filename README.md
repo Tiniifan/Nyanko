@@ -59,4 +59,4 @@ Nyanko is a tool based on [CfgBinEditor](https://github.com/Tiniifan/CfgBinEdito
 
 ![](https://i.imgur.com/y7RoWB6.png)
 
-[Download the Save Editor](https://github.com/Tiniifan/Nyanko/releases/download/latest/Nyanko.exe)
+[Direct Download Link](https://github.com/Tiniifan/Nyanko/releases/latest/download/Nyanko.exe)
