@@ -21,7 +21,7 @@ namespace Nyanko.Level5.Binary
             Strings = new Dictionary<int, string>();
         }
 
-        public CfgBin(Stream stream)
+        public void Open(Stream stream)
         {
             using (var reader = new BinaryDataReader(stream))
             {
@@ -84,6 +84,20 @@ namespace Nyanko.Level5.Binary
 
                 writer.Seek(0);
                 writer.WriteStruct(header);
+            }
+        }
+
+        public void ReplaceEntry(string entryName, Entry newEntry)
+        {
+            int entryIndex = Entries.FindIndex(x => x.GetName() == entryName);
+
+            if (entryIndex >= 0)
+            {
+                Entries[entryIndex] = newEntry;
+            }
+            else
+            {
+                Entries.Add(newEntry);
             }
         }
 

@@ -13,6 +13,7 @@ using Nyanko.Tools;
 using Nyanko.Level5.Binary;
 using Nyanko.Level5.T2bþ;
 using Nyanko.Level5.Logic;
+using Nyanko.Common;
 
 namespace Nyanko
 {
@@ -25,25 +26,39 @@ namespace Nyanko
         public NyankoWindow()
         {
             InitializeComponent();
+
+            // Bind ressource
+            faceComboBox.DataSource = new BindingSource(Faces.IEGO, null);
+            faceComboBox.ValueMember = "Key";
+            faceComboBox.DisplayMember = "Value";
+            faceComboBox.SelectedIndex = -1;
         }
 
-        private void DrawTreeView()
+        private void ModelComboBox_SelectedIndex(ComboBox combobox, uint keyToFind)
         {
-            TreeNode rootNode = new TreeNode(Path.GetFileNameWithoutExtension(openFileDialog1.FileName));
+            BindingSource bindingSource = (combobox.DataSource as BindingSource);
+            Dictionary<uint, string> source = bindingSource.DataSource as Dictionary<uint, string>;
+            combobox.SelectedIndex = source.Keys.ToList().IndexOf(keyToFind);
+            combobox.SelectedItem = keyToFind;
+        }
+
+        private void DrawTreeView(string name)
+        {
+            TreeNode rootNode = new TreeNode(name);
 
             TreeNode textNode = new TreeNode("Text");
             textNode.Tag = "TextType";
             textNode.ContextMenuStrip = textTypeContextMenuStrip;
 
-            foreach (KeyValuePair<int, List<TextValue>> text in T2bþFileOpened.Texts)
+            foreach (KeyValuePair<int, TextConfig> text in T2bþFileOpened.Texts)
             {
                 TreeNode subTextNode = new TreeNode(text.Key.ToString("X8"));
                 subTextNode.Tag = "TextKey";
                 subTextNode.ContextMenuStrip = textKeyContextMenuStrip;
 
-                foreach (TextValue textValue in text.Value)
+                foreach (StringLevel5 stringLevel5 in text.Value.Strings)
                 {
-                    TreeNode textValueNode = new TreeNode(textValue.Text);
+                    TreeNode textValueNode = new TreeNode(stringLevel5.Text);
                     textValueNode.Tag = "TextItem";
                     textValueNode.ContextMenuStrip = textItemContextMenuStrip;
                     subTextNode.Nodes.Add(textValueNode);
@@ -56,18 +71,18 @@ namespace Nyanko
             nounNode.Tag = "NounType";
             nounNode.ContextMenuStrip = textTypeContextMenuStrip;
 
-            foreach (var noun in T2bþFileOpened.Nouns)
+            foreach (KeyValuePair<int, TextConfig> noun in T2bþFileOpened.Nouns)
             {
                 TreeNode subNounNode = new TreeNode(noun.Key.ToString("X8"));
                 subNounNode.Tag = "NounKey";
                 subNounNode.ContextMenuStrip = textKeyContextMenuStrip;
 
-                foreach (TextValue textValue in noun.Value)
+                foreach (StringLevel5 stringLevel5 in noun.Value.Strings)
                 {
-                    TreeNode textValueNode = new TreeNode(textValue.Text);
-                    textValueNode.Tag = "NounItem";
-                    textValueNode.ContextMenuStrip = textItemContextMenuStrip;
-                    subNounNode.Nodes.Add(textValueNode);
+                    TreeNode nounValueNode = new TreeNode(stringLevel5.Text);
+                    nounValueNode.Tag = "NounItem";
+                    nounValueNode.ContextMenuStrip = textItemContextMenuStrip;
+                    subNounNode.Nodes.Add(nounValueNode);
                 }
 
                 nounNode.Nodes.Add(subNounNode);
@@ -99,17 +114,43 @@ namespace Nyanko
             }
         }
 
+        private void NewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string newFileName = Interaction.InputBox("Enter text:");
+            T2bþFileOpened = new T2bþ();
+
+            DrawTreeView(newFileName);
+
+            attachFaceGroupBox.Enabled = true;
+            saveToolStripMenuItem.Enabled = true;
+        }
+
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            openFileDialog1.Filter = "Level 5 Bin files (*.bin)|*.bin";
+            openFileDialog1.FileName = null;
+            openFileDialog1.Filter = "All Supported Files|*.bin;*.txt;*.xml|Level 5 Bin files (*.bin)|*.bin|Text files (*.txt)|*.txt|XML files (*.xml)|*.xml";
             openFileDialog1.RestoreDirectory = true;
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                T2bþFileOpened = new T2bþ(new FileStream(openFileDialog1.FileName, FileMode.Open, FileAccess.Read));
+                string selectedFileName = openFileDialog1.FileName;
 
-                DrawTreeView();
+                if (selectedFileName.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
+                {
+                    T2bþFileOpened = new T2bþ(new FileStream(selectedFileName, FileMode.Open, FileAccess.Read));
+                }
+                else if (selectedFileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                {
+                    T2bþFileOpened = new T2bþ(File.ReadAllLines(openFileDialog1.FileName));
+                }
+                else if (selectedFileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+                {
+                    T2bþFileOpened = new T2bþ(File.ReadAllText(openFileDialog1.FileName));
+                }
 
+                DrawTreeView(Path.GetFileNameWithoutExtension(openFileDialog1.FileName));
+
+                attachFaceGroupBox.Enabled = true;
                 saveToolStripMenuItem.Enabled = true;
             }
         }
@@ -120,7 +161,7 @@ namespace Nyanko
 
             saveFileDialog.FileName = Path.GetFileName(openFileDialog1.FileName);
             saveFileDialog.Title = "Save .cfg.bin file";
-            saveFileDialog.Filter = "Bin files (*.bin)|*.bin|Text (.txt)|*.txt";
+            saveFileDialog.Filter = "Level 5 Bin files (*.bin)|*.bin|Level 5 Bin (With Text Config) files (*.bin)|*.bin|Text files (*.txt)|*.txt|XML files (*.xml)|*.xml";
             saveFileDialog.InitialDirectory = openFileDialog1.InitialDirectory;
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
@@ -129,11 +170,19 @@ namespace Nyanko
                 
                 if (saveFileDialog.FilterIndex == 1)
                 {
-                    T2bþFileOpened.Save(saveFileName);
-                } else
+                    T2bþFileOpened.Save(saveFileName, false);
+                }
+                else if (saveFileDialog.FilterIndex == 2)
                 {
-                    MessageBox.Show("Not supported");
-                    return;
+                    T2bþFileOpened.Save(saveFileName, true);
+                }
+                else if (saveFileDialog.FilterIndex == 3)
+                {
+                    File.WriteAllLines(saveFileName, T2bþFileOpened.ExportToTxt());
+                }
+                else if (saveFileDialog.FilterIndex == 4)
+                {
+                    File.WriteAllLines(saveFileName, T2bþFileOpened.ExportToXML());
                 }
 
                 MessageBox.Show("Saved!");
@@ -146,10 +195,27 @@ namespace Nyanko
             {
                 textTextBox.Enabled = true;
                 textTextBox.Text = e.Node.Text;
+
+                if (e.Node.Tag.ToString() == "TextItem") 
+                {
+                    TreeNode parentNode = e.Node.Parent;
+                    TextConfig textConfig = T2bþFileOpened.Texts[HexToInt(parentNode.Text)];
+
+                    if (textConfig.WashaID != -1)
+                    {
+                        ModelComboBox_SelectedIndex(faceComboBox, (uint)textConfig.WashaID);
+                    } else
+                    {
+                        faceComboBox.SelectedIndex = 0;
+                    }
+
+                    faceComboBox.Enabled = true;
+                }
             }
             else
             {
                 textTextBox.Enabled = false;
+                faceComboBox.Enabled = false;
                 textTextBox.Clear();
             }
         }
@@ -176,14 +242,13 @@ namespace Nyanko
                 string entryType = parentNode.Tag.ToString();
                 int selectedIndex = parentNode.Nodes.IndexOf(selectedNode);
 
-
                 if (entryType == "TextKey")
                 {
-                    T2bþFileOpened.Texts[HexToInt(parentNode.Text)][selectedIndex].Text = selectedNode.Text;
+                    T2bþFileOpened.Texts[HexToInt(parentNode.Text)].Strings[selectedIndex].Text = selectedNode.Text;
                 }
                 else
                 {
-                    T2bþFileOpened.Nouns[HexToInt(parentNode.Text)][selectedIndex].Text = selectedNode.Text;
+                    T2bþFileOpened.Nouns[HexToInt(parentNode.Text)].Strings[selectedIndex].Text = selectedNode.Text;
                 }
             }
         }
@@ -202,11 +267,11 @@ namespace Nyanko
 
                 if (entryType == "TextKey")
                 {
-                    T2bþFileOpened.Texts[HexToInt(parentNode.Text)].RemoveAt(selectedIndex);
+                    T2bþFileOpened.Texts[HexToInt(parentNode.Text)].Strings.RemoveAt(selectedIndex);
                 }
                 else
                 {
-                    T2bþFileOpened.Nouns[HexToInt(parentNode.Text)].RemoveAt(selectedIndex);
+                    T2bþFileOpened.Nouns[HexToInt(parentNode.Text)].Strings.RemoveAt(selectedIndex);
                 }
 
                 selectedNode.Remove();
@@ -225,12 +290,12 @@ namespace Nyanko
 
             if (entryType == "TextKey")
             {
-                T2bþFileOpened.Texts[HexToInt(selectedNode.Text)].Add(new TextValue(selectedNode.Nodes.Count, newText));
+                T2bþFileOpened.Texts[HexToInt(selectedNode.Text)].Strings.Add(new StringLevel5(selectedNode.Nodes.Count, newText));
                 entryType = "TextItem";
             }
             else
             {
-                T2bþFileOpened.Nouns[HexToInt(selectedNode.Text)].Add(new TextValue(selectedNode.Nodes.Count, newText));
+                T2bþFileOpened.Nouns[HexToInt(selectedNode.Text)].Strings.Add(new StringLevel5(selectedNode.Nodes.Count, newText));
                 entryType = "NounItem";
             }
 
@@ -256,12 +321,12 @@ namespace Nyanko
             {
                 if (entryType == "TextKey")
                 {
-                    List<TextValue> entries = T2bþFileOpened.Texts[HexToInt(selectedNode.Text)];
+                    TextConfig entries = T2bþFileOpened.Texts[HexToInt(selectedNode.Text)];
                     T2bþFileOpened.Texts.Remove(HexToInt(selectedNode.Text));
                     T2bþFileOpened.Texts.Add(crc32, entries);
                 } else
                 {
-                    List<TextValue> entries = T2bþFileOpened.Nouns[HexToInt(selectedNode.Text)];
+                    TextConfig entries = T2bþFileOpened.Nouns[HexToInt(selectedNode.Text)];
                     T2bþFileOpened.Nouns.Remove(HexToInt(selectedNode.Text));
                     T2bþFileOpened.Nouns.Add(crc32, entries);
                 }
@@ -315,12 +380,12 @@ namespace Nyanko
             {
                 if (entryType == "TextType")
                 {
-                    T2bþFileOpened.Texts.Add(crc32, new List<TextValue>());
+                    T2bþFileOpened.Texts.Add(crc32, new TextConfig(new List<StringLevel5>()));
                     entryType = "TextKey";
                 }
                 else
                 {
-                    T2bþFileOpened.Nouns.Add(crc32, new List<TextValue>());
+                    T2bþFileOpened.Nouns.Add(crc32, new TextConfig(new List<StringLevel5>()));
                     entryType = "NounKey";
                 }
             }
@@ -351,6 +416,29 @@ namespace Nyanko
         private void CollapseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             textTreeView.CollapseAll();
+        }
+
+        private void FaceComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!faceComboBox.Focused || faceComboBox.SelectedIndex == -1) return;
+
+            TreeNode selectedNode = textTreeView.SelectedNode;
+            TreeNode parentNode = selectedNode.Parent;
+            TextConfig textConfig = T2bþFileOpened.Texts[HexToInt(parentNode.Text)];
+
+            if (faceComboBox.SelectedIndex == 0)
+            {
+                textConfig.WashaID = -1;
+            } else
+            {
+                if (faceComboBox.SelectedItem is KeyValuePair<uint, string> selectedWashaID)
+                {
+                    textConfig.WashaID = (int)selectedWashaID.Key;
+                } else
+                {
+                    textConfig.WashaID = -1;
+                }            
+            }
         }
     }
 }
