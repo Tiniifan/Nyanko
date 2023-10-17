@@ -109,24 +109,24 @@ namespace Nyanko.Level5.Binary
 
         public byte GetEncoding()
         {
-            if (Encoding != null && Encoding.Equals(Encoding.GetEncoding("shift-jis")))
+            if (Encoding != null && Encoding.Equals(Encoding.GetEncoding("SHIFT-JIS")))
             {
-                return 1;
+                return 0;
             }
             else
             {
-                return 0;
+                return 1;
             }
         }
 
         private Encoding SetEncoding(byte b)
         {
-            switch(b)
+            if (b == 0)
             {
-                case 0x00:
-                    return Encoding.GetEncoding("shift-jis");
-                default:
-                    return Encoding.UTF8;
+                return Encoding.GetEncoding("SHIFT-JIS");
+            } else
+            {
+                return Encoding.UTF8;
             }
         }
 
@@ -252,7 +252,7 @@ namespace Nyanko.Level5.Binary
                         }
                     }
 
-                    temp.Add(new Entry(name, variables));
+                    temp.Add(new Entry(name, variables, Encoding));
                 }
             }
 
@@ -293,7 +293,7 @@ namespace Nyanko.Level5.Binary
 
                 if (nodeType.EndsWith("beg") || nodeType.EndsWith("begin") || nodeType.EndsWith("ptree"))
                 {
-                    Entry newNode = new Entry(name, variables);
+                    Entry newNode = new Entry(name, variables, Encoding);
 
                     if (stack.Count > 0)
                     {
@@ -349,7 +349,7 @@ namespace Nyanko.Level5.Binary
                 }
                 else
                 {
-                    Entry newItem = new Entry(name, variables);
+                    Entry newItem = new Entry(name, variables, Encoding);
 
                     if (i + 1 < entries.Count)
                     {

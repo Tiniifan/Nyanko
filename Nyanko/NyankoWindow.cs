@@ -172,10 +172,10 @@ namespace Nyanko
 
             if (T2bþFileOpened.GetEncoding() == 0x0)
             {
-                saveFileDialog.EncodingType = EncodingType.UTF8;
+                saveFileDialog.EncodingType = EncodingType.ShiftJIS;
             } else
             {
-                saveFileDialog.EncodingType = EncodingType.ShiftJIS;
+                saveFileDialog.EncodingType = EncodingType.UTF8;
             }
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)

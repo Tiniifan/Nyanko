@@ -241,7 +241,7 @@ namespace Nyanko.Level5.T2bþ
 
         private Entry GetTextEntry(Dictionary<int, string> strings)
         {
-            Entry textEntry = new Entry("TEXT_INFO_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, Texts.Values.Sum(textList => textList.Strings.Count)) }, true);
+            Entry textEntry = new Entry("TEXT_INFO_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, Texts.Values.Sum(textList => textList.Strings.Count)) }, Encoding, true);
 
             foreach (KeyValuePair<int, TextConfig> textItem in Texts)
             {
@@ -255,7 +255,7 @@ namespace Nyanko.Level5.T2bþ
                             new Variable(Logic.Type.Int, i),
                             new Variable(Logic.Type.String, new OffsetTextPair(strings.FirstOrDefault(x => x.Value == textValue.Text).Key, textValue.Text)),
                             new Variable(Logic.Type.Int, 0),
-                        }
+                        }, Encoding
                     );
 
                     textEntry.Children.Add(textItemEntry);
@@ -269,7 +269,7 @@ namespace Nyanko.Level5.T2bþ
         {
             int index = 0;
             List<int> washas = Texts.Where(x => x.Value.WashaID != -1).Select(x => x.Value.WashaID).ToList();
-            Entry textConfigEntry = new Entry("TEXT_CONFIG_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, Texts.Count) }, true);
+            Entry textConfigEntry = new Entry("TEXT_CONFIG_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, Texts.Count) }, Encoding, true);
 
             foreach (KeyValuePair<int, TextConfig> textItem in Texts)
             {
@@ -278,7 +278,7 @@ namespace Nyanko.Level5.T2bþ
                             new Variable(Logic.Type.Int, textItem.Key),
                             new Variable(Logic.Type.Int, textItem.Value.Strings.Count),
                             new Variable(Logic.Type.Int, washas.IndexOf(textItem.Value.WashaID)),
-                        }
+                        }, Encoding
                 );
 
                 textConfigEntry.Children.Add(textConfigItemEntry);
@@ -291,7 +291,7 @@ namespace Nyanko.Level5.T2bþ
         private Entry GetTextWashaEntry()
         {
             int[] washas = Texts.Where(x => x.Value.WashaID != -1).Select(x => x.Value.WashaID).ToArray();
-            Entry textWashaEntry = new Entry("TEXT_WASHA_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, washas.Length) }, true);
+            Entry textWashaEntry = new Entry("TEXT_WASHA_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, washas.Length) }, Encoding, true);
 
             for (int i = 0; i < washas.Length; i ++)
             {
@@ -299,7 +299,7 @@ namespace Nyanko.Level5.T2bþ
                         {
                             new Variable(Logic.Type.Int, i),
                             new Variable(Logic.Type.Int, washas[i]),
-                        }
+                        }, Encoding
                 );
 
                 textWashaEntry.Children.Add(textWashaItem);
@@ -310,7 +310,7 @@ namespace Nyanko.Level5.T2bþ
 
         private Entry GetNounEntry(Dictionary<int, string> strings)
         {
-            Entry nounEntry = new Entry("NOUN_INFO_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, Nouns.Values.Sum(textList => textList.Strings.Count)) }, true);
+            Entry nounEntry = new Entry("NOUN_INFO_BEGIN_0", new List<Variable>() { new Variable(Logic.Type.Int, Nouns.Values.Sum(textList => textList.Strings.Count)) }, Encoding, true);
 
             foreach (KeyValuePair<int, TextConfig> nounItem in Nouns)
             {
@@ -334,7 +334,7 @@ namespace Nyanko.Level5.T2bþ
                             new Variable(Logic.Type.Int, 0),
                             new Variable(Logic.Type.Int, 0),
                             new Variable(Logic.Type.Int, 0),
-                        }
+                        }, Encoding
                     );
 
                     nounEntry.Children.Add(textItemEntry);
