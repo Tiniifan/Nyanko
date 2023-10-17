@@ -34,6 +34,7 @@ namespace Nyanko.Level5.Logic
         {
             Name = name;
             Variables = variables;
+            Encoding = encoding;
             Children = new List<Entry>();
             EndTerminator = endTerminator;
         }
