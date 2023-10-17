@@ -232,7 +232,7 @@ namespace Nyanko.Level5.T2bþ
                 if (text != null)
                 {
                     output.Add(offset, text);
-                    offset += Encoding.UTF8.GetBytes(text).Length + 1;
+                    offset += Encoding.GetBytes(text).Length + 1;
                 }
             }
 

@@ -11,6 +11,8 @@ namespace Nyanko.Level5.Binary
 {
     public class CfgBin
     {
+        public Encoding Encoding;
+
         public List<Entry> Entries;
 
         public Dictionary<int, string> Strings;
@@ -25,6 +27,10 @@ namespace Nyanko.Level5.Binary
         {
             using (var reader = new BinaryDataReader(stream))
             {
+                reader.Seek((uint) reader.Length - 0x0A);
+                Encoding = SetEncoding(reader.ReadValue<byte>());
+
+                reader.Seek(0x0);
                 var header = reader.ReadStruct<CfgBinSupport.Header>();
 
                 byte[] entriesBuffer = reader.GetSection(0x10, header.StringTableOffset);
@@ -79,7 +85,7 @@ namespace Nyanko.Level5.Binary
                 writer.Write(EncodeKeyTable(uniqueKeysList));
 
                 writer.Write(new byte[5] { 0x01, 0x74, 0x32, 0x62, 0xFE });
-                writer.Write(new byte[4] { 0x01, 0x01, 0x00, 0x01 });
+                writer.Write(new byte[4] { 0x01, GetEncoding(), 0x00, 0x01 });
                 writer.WriteAlignment();
 
                 writer.Seek(0);
@@ -101,6 +107,29 @@ namespace Nyanko.Level5.Binary
             }
         }
 
+        public byte GetEncoding()
+        {
+            if (Encoding != null && Encoding.Equals(Encoding.GetEncoding("shift-jis")))
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        private Encoding SetEncoding(byte b)
+        {
+            switch(b)
+            {
+                case 0x00:
+                    return Encoding.GetEncoding("shift-jis");
+                default:
+                    return Encoding.UTF8;
+            }
+        }
+
         private Dictionary<int, string> ParseStrings(int stringCount, byte[] stringTableBuffer)
         {
             Dictionary<int, string> result = new Dictionary<int, string>();
@@ -109,7 +138,7 @@ namespace Nyanko.Level5.Binary
             {
                 for (int i = 0; i < stringCount; i++)
                 {
-                    result.Add((int)reader.Position, reader.ReadString(Encoding.UTF8));
+                    result.Add((int)reader.Position, reader.ReadString(Encoding));
                 }
             }
 
@@ -134,7 +163,7 @@ namespace Nyanko.Level5.Binary
                     int stringEnd = Array.IndexOf(keyStringBlob, (byte)0, stringStart);
                     byte[] stringBuf = new byte[stringEnd - stringStart];
                     Array.Copy(keyStringBlob, stringStart, stringBuf, 0, stringEnd - stringStart);
-                    string key = Encoding.UTF8.GetString(stringBuf);
+                    string key = Encoding.GetString(stringBuf);
                     keyTable[crc32] = key;
                 }
             }
@@ -365,7 +394,7 @@ namespace Nyanko.Level5.Binary
                 {
                     foreach (KeyValuePair<int, string> kvp in strings)
                     {
-                        writer.Write(Encoding.UTF8.GetBytes(kvp.Value));
+                        writer.Write(Encoding.GetBytes(kvp.Value));
                         writer.Write((byte)0x00);
                     }
 
@@ -385,7 +414,7 @@ namespace Nyanko.Level5.Binary
 
                 foreach (var key in keyList)
                 {
-                    keyStringsSize += (uint)Encoding.UTF8.GetByteCount(key) + 1; // +1 for null-terminator
+                    keyStringsSize += (uint)Encoding.GetByteCount(key) + 1; // +1 for null-terminator
                 }
 
                 // Write header
@@ -402,10 +431,10 @@ namespace Nyanko.Level5.Binary
                 // Calculate CRC32 for each key and write key entries
                 foreach (var key in keyList)
                 {
-                    uint crc32 = Crc32.Compute(Encoding.UTF8.GetBytes(key));
+                    uint crc32 = Crc32.Compute(Encoding.GetBytes(key));
                     writer.Write(crc32);
                     writer.Write(stringOffset);
-                    stringOffset += Encoding.UTF8.GetBytes(key).Count() + 1;
+                    stringOffset += Encoding.GetBytes(key).Count() + 1;
                 }
 
                 writer.WriteAlignment(0x10, 0xFF);
@@ -415,7 +444,7 @@ namespace Nyanko.Level5.Binary
                 // Write key strings
                 foreach (var key in keyList)
                 {
-                    byte[] stringBytes = Encoding.UTF8.GetBytes(key);
+                    byte[] stringBytes = Encoding.GetBytes(key);
                     writer.Write(stringBytes);
                     writer.Write((byte)0); // Null-terminator
                 }

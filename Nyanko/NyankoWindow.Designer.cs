@@ -52,8 +52,8 @@ namespace Nyanko
             this.renameKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.attachFaceGroupBox = new System.Windows.Forms.GroupBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.faceComboBox = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.menuStrip1.SuspendLayout();
@@ -123,11 +123,10 @@ namespace Nyanko
             // 
             // searchToolStripMenuItem
             // 
-            this.searchToolStripMenuItem.Enabled = false;
             this.searchToolStripMenuItem.Name = "searchToolStripMenuItem";
+            this.searchToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F)));
             this.searchToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
             this.searchToolStripMenuItem.Text = "Search";
-            this.searchToolStripMenuItem.Visible = false;
             this.searchToolStripMenuItem.Click += new System.EventHandler(this.SearchToolStripMenuItem_Click);
             // 
             // expandAllToolStripMenuItem
@@ -248,15 +247,6 @@ namespace Nyanko
             this.attachFaceGroupBox.TabStop = false;
             this.attachFaceGroupBox.Text = "Attach character";
             // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 38);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(53, 13);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Character";
-            // 
             // faceComboBox
             // 
             this.faceComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -270,6 +260,15 @@ namespace Nyanko
             this.faceComboBox.Size = new System.Drawing.Size(167, 21);
             this.faceComboBox.TabIndex = 1;
             this.faceComboBox.SelectedIndexChanged += new System.EventHandler(this.FaceComboBox_SelectedIndexChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(16, 38);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(53, 13);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Character";
             // 
             // tableLayoutPanel1
             // 

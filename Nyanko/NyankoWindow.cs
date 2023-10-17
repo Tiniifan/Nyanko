@@ -14,6 +14,7 @@ using Nyanko.Level5.Binary;
 using Nyanko.Level5.T2bþ;
 using Nyanko.Level5.Logic;
 using Nyanko.Common;
+using Nyanko.UserControls;
 
 namespace Nyanko
 {
@@ -117,12 +118,17 @@ namespace Nyanko
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string newFileName = Interaction.InputBox("Enter text:");
-            T2bþFileOpened = new T2bþ();
 
-            DrawTreeView(newFileName);
+            if (newFileName != "")
+            {
+                T2bþFileOpened = new T2bþ();
 
-            attachFaceGroupBox.Enabled = true;
-            saveToolStripMenuItem.Enabled = true;
+                DrawTreeView(newFileName);
+
+                attachFaceGroupBox.Enabled = true;
+                saveToolStripMenuItem.Enabled = true;
+                openFileDialog1.FileName = newFileName;
+            }
         }
 
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
@@ -157,16 +163,32 @@ namespace Nyanko
 
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            SaveFileDialogWithEncoding saveFileDialog = new SaveFileDialogWithEncoding();
 
             saveFileDialog.FileName = Path.GetFileName(openFileDialog1.FileName);
             saveFileDialog.Title = "Save .cfg.bin file";
             saveFileDialog.Filter = "Level 5 Bin files (*.bin)|*.bin|Level 5 Bin (With Text Config) files (*.bin)|*.bin|Text files (*.txt)|*.txt|XML files (*.xml)|*.xml";
-            saveFileDialog.InitialDirectory = openFileDialog1.InitialDirectory;
+            saveFileDialog.InitialDirectory = Path.GetDirectoryName(openFileDialog1.FileName);
+
+            if (T2bþFileOpened.GetEncoding() == 0x0)
+            {
+                saveFileDialog.EncodingType = EncodingType.UTF8;
+            } else
+            {
+                saveFileDialog.EncodingType = EncodingType.ShiftJIS;
+            }
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 string saveFileName = saveFileDialog.FileName;
+
+                if (saveFileDialog.EncodingType == EncodingType.ShiftJIS)
+                {
+                    T2bþFileOpened.Encoding = Encoding.GetEncoding("Shift-JIS");
+                } else
+                {
+                    T2bþFileOpened.Encoding = Encoding.UTF8;
+                }
                 
                 if (saveFileDialog.FilterIndex == 1)
                 {
@@ -405,7 +427,8 @@ namespace Nyanko
 
         private void SearchToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            SearchWindow searchWindow = new SearchWindow(textTreeView);
+            searchWindow.Show();
         }
 
         private void ExpandAllToolStripMenuItem_Click(object sender, EventArgs e)

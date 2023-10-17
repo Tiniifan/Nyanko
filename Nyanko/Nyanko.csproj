@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Faces.cs" />
+    <Compile Include="UserControls\SaveFileDialogWithEncodingcs.cs" />
     <Compile Include="Level5\Binary\CfgBin.cs" />
     <Compile Include="Level5\Binary\CfgBinSupport.cs" />
     <Compile Include="Level5\Logic\TextConfig.cs" />
@@ -67,11 +68,11 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SearchResultWindow.cs">
+    <Compile Include="SearchWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SearchResultWindow.Designer.cs">
-      <DependentUpon>SearchResultWindow.cs</DependentUpon>
+    <Compile Include="SearchWindow.Designer.cs">
+      <DependentUpon>SearchWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Tools\Crc32.cs" />
     <Compile Include="Tools\BinaryDataReader.cs" />
@@ -88,8 +89,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="SearchResultWindow.resx">
-      <DependentUpon>SearchResultWindow.cs</DependentUpon>
+    <EmbeddedResource Include="SearchWindow.resx">
+      <DependentUpon>SearchWindow.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
