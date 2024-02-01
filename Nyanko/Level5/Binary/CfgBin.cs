@@ -5,7 +5,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Nyanko.Tools;
-using Nyanko.Level5.Logic;
+using Nyanko.Level5.Binary.Logic;
 
 namespace Nyanko.Level5.Binary
 {
@@ -23,11 +23,36 @@ namespace Nyanko.Level5.Binary
             Strings = new Dictionary<int, string>();
         }
 
+        public void Open(byte[] data)
+        {
+            using (var reader = new BinaryDataReader(data))
+            {
+                reader.Seek((uint)reader.Length - 0x0A);
+                Encoding = SetEncoding(reader.ReadValue<byte>());
+
+                reader.Seek(0x0);
+                var header = reader.ReadStruct<CfgBinSupport.Header>();
+
+                byte[] entriesBuffer = reader.GetSection(0x10, header.StringTableOffset);
+
+                byte[] stringTableBuffer = reader.GetSection((uint)header.StringTableOffset, header.StringTableLength);
+                Strings = ParseStrings(header.StringTableCount, stringTableBuffer);
+
+                long keyTableOffset = RoundUp(header.StringTableOffset + header.StringTableLength, 16);
+                reader.Seek((uint)keyTableOffset);
+                int keyTableSize = reader.ReadValue<int>();
+                byte[] keyTableBlob = reader.GetSection((uint)keyTableOffset, keyTableSize);
+                Dictionary<uint, string> keyTable = ParseKeyTable(keyTableBlob);
+
+                Entries = ParseEntries(header.EntriesCount, entriesBuffer, keyTable);
+            }
+        }
+
         public void Open(Stream stream)
         {
             using (var reader = new BinaryDataReader(stream))
             {
-                reader.Seek((uint) reader.Length - 0x0A);
+                reader.Seek((uint)reader.Length - 0x0A);
                 Encoding = SetEncoding(reader.ReadValue<byte>());
 
                 reader.Seek(0x0);
@@ -93,6 +118,53 @@ namespace Nyanko.Level5.Binary
             }
         }
 
+        public byte[] Save()
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                BinaryDataWriter writer = new BinaryDataWriter(stream);
+
+                CfgBinSupport.Header header;
+                header.EntriesCount = Count(Entries);
+                header.StringTableOffset = 0;
+                header.StringTableLength = 0;
+                header.StringTableCount = Strings.Count;
+
+                writer.Seek(0x10);
+
+                foreach (Entry entry in Entries)
+                {
+                    writer.Write(entry.EncodeEntry());
+                }
+
+                writer.WriteAlignment(0x10, 0xFF);
+                header.StringTableOffset = (int)writer.Position;
+
+                if (Strings.Count > 0)
+                {
+                    writer.Write(EncodeStrings(Strings));
+                    header.StringTableLength = (int)writer.Position - header.StringTableOffset;
+                    writer.WriteAlignment(0x10, 0xFF);
+                }
+
+                List<string> uniqueKeysList = Entries
+                    .SelectMany(entry => entry.GetUniqueKeys())
+                    .Distinct()
+                    .ToList();
+
+                writer.Write(EncodeKeyTable(uniqueKeysList));
+
+                writer.Write(new byte[5] { 0x01, 0x74, 0x32, 0x62, 0xFE });
+                writer.Write(new byte[4] { 0x01, GetEncoding(), 0x00, 0x01 });
+                writer.WriteAlignment();
+
+                writer.Seek(0);
+                writer.WriteStruct(header);
+
+                return stream.ToArray();
+            }
+        }
+
         public void ReplaceEntry(string entryName, Entry newEntry)
         {
             int entryIndex = Entries.FindIndex(x => x.GetName() == entryName);
@@ -104,6 +176,20 @@ namespace Nyanko.Level5.Binary
             else
             {
                 Entries.Add(newEntry);
+            }
+        }
+
+        public void ReplaceEntry<T>(string entryBeginName, string entryName, T[] values) where T : class
+        {
+            Entry baseBegin = Entries.Where(x => x.GetName() == entryBeginName).FirstOrDefault();
+            baseBegin.Variables[0].Value = values.Count();
+            baseBegin.Children.Clear();
+
+            for (int i = 0; i < values.Count(); i++)
+            {
+                Entry newBaseEntry = new Entry(entryName + i, new List<Variable>(), Encoding.UTF8);
+                newBaseEntry.SetVariablesFromClass(values[i]);
+                baseBegin.Children.Add(newBaseEntry);
             }
         }
 
@@ -124,7 +210,8 @@ namespace Nyanko.Level5.Binary
             if (b == 0)
             {
                 return Encoding.GetEncoding("SHIFT-JIS");
-            } else
+            }
+            else
             {
                 return Encoding.UTF8;
             }
@@ -280,7 +367,7 @@ namespace Nyanko.Level5.Binary
             List<Entry> output = new List<Entry>();
             Dictionary<string, int> depth = new Dictionary<string, int>();
 
-            int i = 0;  // Indice pour parcourir les entrées
+            int i = 0;
 
             while (i < entries.Count)
             {
@@ -347,37 +434,46 @@ namespace Nyanko.Level5.Binary
                         depth.Remove(key);
                     }
                 }
+                else if (nodeName == "last_update_date_time" || nodeName == "last_update_user" || nodeName == "last_update_machine")
+                {
+                    Entry newNode = new Entry(name, variables, Encoding);
+                    newNode.EndTerminator = true;
+
+                    output.Add(newNode);
+                }
                 else
                 {
                     Entry newItem = new Entry(name, variables, Encoding);
 
-                    if (i + 1 < entries.Count)
+                    string entryNameWithMaxDepth = depth.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
+                    if (entryNameWithMaxDepth.Contains("_LIST_BEG_"))
                     {
-                        string[] nextNameParts = entries[i + 1].Name.Split('_');
-                        string nextNodeType = nextNameParts[nextNameParts.Length - 2].ToLower();
-                        string nextNodeName = string.Join("_", nextNameParts, 0, nextNameParts.Length - 1).ToLower();
+                        entryNameWithMaxDepth = entryNameWithMaxDepth.Replace("_LIST_BEG_", "_BEG_");
+                    }
+                    string[] entryNameWithMaxDepthParts = entryNameWithMaxDepth.Split('_');
+                    string entryBaseName = string.Join("_", entryNameWithMaxDepthParts.Take(entryNameWithMaxDepthParts.Length - 2));
 
-                        if (nextNodeName != nodeName && nextNodeType != "end")
+                    if (!name.StartsWith(entryBaseName))
+                    {
+                        if (!entryNameWithMaxDepth.Contains("BEGIN") && !entryNameWithMaxDepth.Contains("BEG") && !entryNameWithMaxDepth.Contains("PTREE"))
                         {
+                            stack.RemoveAt(stack.Count - 1);
+                            depth.Remove(entryNameWithMaxDepth);
                             stack[stack.Count - 1].Children.Add(newItem);
-                            stack.Add(newItem);
                         }
                         else
                         {
-                            stack[stack.Count - 1].Children.Add(newItem);
-                        }
+                            Entry lastEntry = stack[stack.Count - 1].Children[stack[stack.Count - 1].Children.Count() - 1];
+                            lastEntry.Children.Add(newItem);
+                            stack.Add(newItem);
+                            depth[name] = stack.Count;
+                        };
                     }
                     else
                     {
-                        if (stack.Count() != 0)
-                        {
-                            stack[stack.Count - 1].Children.Add(newItem);
-                        }
-                        else
-                        {
-                            output.Add(newItem);
-                        }
+                        stack[stack.Count - 1].Children.Add(newItem);
                     }
+
                 }
 
                 i++;

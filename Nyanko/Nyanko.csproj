@@ -54,11 +54,11 @@
     <Compile Include="UserControls\SaveFileDialogWithEncodingcs.cs" />
     <Compile Include="Level5\Binary\CfgBin.cs" />
     <Compile Include="Level5\Binary\CfgBinSupport.cs" />
-    <Compile Include="Level5\Logic\TextConfig.cs" />
-    <Compile Include="Level5\Logic\Variable.cs" />
-    <Compile Include="Level5\Logic\Entry.cs" />
-    <Compile Include="Level5\Logic\OffsetStringPair.cs" />
-    <Compile Include="Level5\Logic\Type.cs" />
+    <Compile Include="Level5\Binary\Logic\TextConfig.cs" />
+    <Compile Include="Level5\Binary\Logic\Variable.cs" />
+    <Compile Include="Level5\Binary\Logic\Entry.cs" />
+    <Compile Include="Level5\Binary\Logic\OffsetStringPair.cs" />
+    <Compile Include="Level5\Binary\Logic\Type.cs" />
     <Compile Include="Level5\T2bþ\T2bþ.cs" />
     <Compile Include="NyankoWindow.cs">
       <SubType>Form</SubType>

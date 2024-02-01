@@ -12,7 +12,7 @@ using Microsoft.VisualBasic;
 using Nyanko.Tools;
 using Nyanko.Level5.Binary;
 using Nyanko.Level5.T2bþ;
-using Nyanko.Level5.Logic;
+using Nyanko.Level5.Binary.Logic;
 using Nyanko.Common;
 using Nyanko.UserControls;
 
