@@ -91,6 +91,7 @@ namespace Nyanko
 
             rootNode.Nodes.Add(textNode);
             rootNode.Nodes.Add(nounNode);
+            rootNode.Expand();
 
             textTreeView.Nodes.Clear();
             textTreeView.Nodes.Add(rootNode);
@@ -131,6 +132,27 @@ namespace Nyanko
             }
         }
 
+        private void OpenFile(string fileName)
+        {
+            if (fileName.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
+            {
+                T2bþFileOpened = new T2bþ(new FileStream(fileName, FileMode.Open, FileAccess.Read));
+            }
+            else if (fileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+            {
+                T2bþFileOpened = new T2bþ(File.ReadAllLines(fileName));
+            }
+            else if (fileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+            {
+                T2bþFileOpened = new T2bþ(File.ReadAllText(fileName));
+            }
+
+            DrawTreeView(Path.GetFileNameWithoutExtension(fileName));
+
+            attachFaceGroupBox.Enabled = true;
+            saveToolStripMenuItem.Enabled = true;
+        }
+
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = null;
@@ -139,26 +161,26 @@ namespace Nyanko
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                string selectedFileName = openFileDialog1.FileName;
-
-                if (selectedFileName.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
-                {
-                    T2bþFileOpened = new T2bþ(new FileStream(selectedFileName, FileMode.Open, FileAccess.Read));
-                }
-                else if (selectedFileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
-                {
-                    T2bþFileOpened = new T2bþ(File.ReadAllLines(openFileDialog1.FileName));
-                }
-                else if (selectedFileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
-                {
-                    T2bþFileOpened = new T2bþ(File.ReadAllText(openFileDialog1.FileName));
-                }
-
-                DrawTreeView(Path.GetFileNameWithoutExtension(openFileDialog1.FileName));
-
-                attachFaceGroupBox.Enabled = true;
-                saveToolStripMenuItem.Enabled = true;
+                OpenFile(openFileDialog1.FileName);
             }
+        }
+
+        private void NyankoWindow_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            string dragPath = Path.GetFullPath(files[0]);
+            string dragExt = Path.GetExtension(files[0]);
+
+            if (files.Length > 1) return;
+            if (dragExt != ".bin" & dragExt != ".txt" & dragExt != ".xml") return;
+
+            openFileDialog1.FileName = dragPath;
+            OpenFile(openFileDialog1.FileName);
+        }
+
+        private void NyankoWindow_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)) e.Effect = DragDropEffects.Copy;
         }
 
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
@@ -391,7 +413,23 @@ namespace Nyanko
             string entryType = selectedNode.Tag.ToString();
 
             string keyName = Interaction.InputBox("Enter key name:");
-            int crc32 = unchecked((int)Crc32.Compute(Encoding.UTF8.GetBytes(keyName)));
+            int crc32 = 0;
+
+            if (keyName.Length == 8)
+            {
+                try
+                {
+                    crc32 = Convert.ToInt32(keyName, 16);
+                }
+                catch
+                {
+                    crc32 = unchecked((int)Crc32.Compute(Encoding.UTF8.GetBytes(keyName)));
+                }
+            }
+            else
+            {
+                crc32 = unchecked((int)Crc32.Compute(Encoding.UTF8.GetBytes(keyName)));
+            }
 
             if (crc32 == 0)
             {

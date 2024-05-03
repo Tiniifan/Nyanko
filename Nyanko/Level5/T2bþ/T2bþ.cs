@@ -116,9 +116,9 @@ namespace Nyanko.Level5.T2bþ
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(xmlData);
 
-            XmlNodeList textNodes = xmlDoc.SelectNodes("/Texts/TextConfig");
+            XmlNodeList textConfigNodes = xmlDoc.SelectNodes("Root/*/TextConfig");
 
-            foreach (XmlNode textNode in textNodes)
+            foreach (XmlNode textNode in textConfigNodes)
             {
                 int crc32 = int.Parse(textNode.Attributes.GetNamedItem("crc32").Value.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber);
                 int washa = int.Parse(textNode.Attributes.GetNamedItem("washa").Value.Replace("0x", ""), System.Globalization.NumberStyles.HexNumber);
@@ -157,32 +157,30 @@ namespace Nyanko.Level5.T2bþ
 
             foreach (string line in lines)
             {
-                if (IsRegularFormat(line))
+                Match match = GetMatch(line);
+
+                if (match != null)
                 {
-                    Match match = Regex.Match(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/0x([A-Fa-f0-9]+)\]");
-
-                    if (match.Success)
+                    string type = match.Groups[1].Value;
+                    int crc32 = int.Parse(match.Groups[2].Value, System.Globalization.NumberStyles.HexNumber);
+                    int washa = -1;
+                    if (match.Groups[3].Value != "-1")
                     {
-                        string type = match.Groups[1].Value;
-                        int crc32 = int.Parse(match.Groups[2].Value, System.Globalization.NumberStyles.HexNumber);
-                        int washa = int.Parse(match.Groups[3].Value, System.Globalization.NumberStyles.HexNumber);
-
-                        currentTextConfig = new TextConfig(new List<StringLevel5>(), washa);
-
-                        if (type == "Texts")
-                        {
-                            Texts[crc32] = currentTextConfig;
-                        }
-                        else if (type == "Nouns")
-                        {
-                            Nouns[crc32] = currentTextConfig;
-                        }
-                    } else
-                    {
-                        Texts.Add(currentIndex, new TextConfig(new List<StringLevel5>() { new StringLevel5(0, line) }, -1));
-                        currentTextConfig = null;
+                        washa = int.Parse(match.Groups[3].Value, System.Globalization.NumberStyles.HexNumber);
                     }
-                } else if (!string.IsNullOrWhiteSpace(line))
+
+                    currentTextConfig = new TextConfig(new List<StringLevel5>(), washa);
+
+                    if (type.Trim().Equals("Texts"))
+                    {
+                        Texts[crc32] = currentTextConfig;
+                    }
+                    else if (type.Trim().Equals("Nouns"))
+                    {
+                        Nouns[crc32] = currentTextConfig;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(line))
                 {
                     if (currentTextConfig != null)
                     {
@@ -198,9 +196,18 @@ namespace Nyanko.Level5.T2bþ
             }
         }
 
-        private bool IsRegularFormat(string line)
+        private Match GetMatch(string line)
         {
-            return Regex.IsMatch(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/0x([A-Fa-f0-9]+)\]");
+            if (Regex.IsMatch(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/0x([A-Fa-f0-9]+)\]"))
+            {
+                return Regex.Match(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/0x([A-Fa-f0-9]+)\]");
+            } else if (Regex.IsMatch(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/(-1)\]"))
+            {
+                return Regex.Match(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/(-1)\]");
+            } else
+            {
+                return null;
+            }
         }
 
         private string[] GetStrings()
@@ -405,17 +412,25 @@ namespace Nyanko.Level5.T2bþ
         {
             List<string> xmlStrings = new List<string>();
 
+            // Ajouter la déclaration XML
             xmlStrings.Add("<?xml version=\"1.0\"?>");
 
-            if (Texts.Count > 1)
+            // Ajouter l'élément racine <Root>
+            xmlStrings.Add("<Root>");
+
+            // Ajouter les éléments <Texts> et <Nouns>
+            if (Texts.Count > 0)
             {
                 xmlStrings.AddRange(ConvertToXml(Texts, "Texts"));
             }
 
-            if (Nouns.Count > 1)
+            if (Nouns.Count > 0)
             {
                 xmlStrings.AddRange(ConvertToXml(Nouns, "Nouns"));
             }
+
+            // Fermer l'élément racine </Root>
+            xmlStrings.Add("</Root>");
 
             return xmlStrings.ToArray();
         }

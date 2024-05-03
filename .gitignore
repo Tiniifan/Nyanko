@@ -1,3 +1,13 @@
 
 .vs/
 Nyanko/obj/
+Nyanko/bin/Debug/*.bin
+Nyanko/bin/Debug/*.zip
+Nyanko/bin/Debug/*.rar
+Nyanko/bin/Debug/*.xml
+Nyanko/bin/Debug/*.txt
+Nyanko/bin/Release/*.bin
+Nyanko/bin/Release/*.zip
+Nyanko/bin/Release/*.rar
+Nyanko/bin/Release/*.xml
+Nyanko/bin/Release/*.txt

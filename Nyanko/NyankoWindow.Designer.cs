@@ -79,8 +79,8 @@ namespace Nyanko
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.newToolStripMenuItem,
             this.openToolStripMenuItem,
+            this.newToolStripMenuItem,
             this.saveToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -302,6 +302,7 @@ namespace Nyanko
             // 
             // NyankoWindow
             // 
+            this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(694, 421);
@@ -311,6 +312,8 @@ namespace Nyanko
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "NyankoWindow";
             this.Text = "Nyanko";
+            this.DragDrop += new System.Windows.Forms.DragEventHandler(this.NyankoWindow_DragDrop);
+            this.DragEnter += new System.Windows.Forms.DragEventHandler(this.NyankoWindow_DragEnter);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.textTypeContextMenuStrip.ResumeLayout(false);
