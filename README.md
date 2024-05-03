@@ -38,21 +38,20 @@ Nyanko is a tool based on [CfgBinEditor](https://github.com/Tiniifan/CfgBinEdito
     ```
 - .xml
   ```xml
-    <?xml version="1.0"?>
-    <Texts>
-     <TextConfig crc32="0x05927998" washa="0xD9CF42CC">
-      <String value="Texte 1" />
-      <String value="Subtexte 1" />
-     </TextConfig>
-     <TextConfig crc32="0x07D4C7C1" washa="0x1B81B43A">
-      <String value="Texte 2" />
-     </TextConfig>
-    </Texts>
-    <Nouns>
-     <TextConfig crc32="0x36957997" washa="0xFFFFFFFF">
-      <String value="Noun 1" />
-     </TextConfig>
-    </Nouns>
+  <?xml version="1.0"?>
+  <Root>
+  	<Texts>
+  	 <TextConfig crc32="0x8A8209CC" washa="0xFFFFFFFF">
+  	  <String value="Expert rappeur au grand cœur."/>
+  	  <String value="Bonsoir"/>
+  	 </TextConfig>
+  	</Texts>
+  	<Nouns>
+  	 <TextConfig crc32="0x4DED3A46" washa="0xFFFFFFFF">
+  	  <String value="Samguk Han"/>
+  	 </TextConfig>
+  	</Nouns>
+  </Root>
   ```
 
 **Screenshots**
