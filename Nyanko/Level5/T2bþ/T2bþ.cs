@@ -376,7 +376,6 @@ namespace Nyanko.Level5.T2bþ
                 ReplaceEntry("NOUN_INFO_BEGIN", nounEntry);
             }
 
-            Strings = strings;
             Save(fileName);
         }
 

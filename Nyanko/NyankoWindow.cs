@@ -30,11 +30,68 @@ namespace Nyanko
         {
             InitializeComponent();
 
+            // Charger les données du fichier characters.txt
+            LoadCharacterData();
+
             // Bind ressource
             faceComboBox.DataSource = new BindingSource(Faces.IEGO, null);
             faceComboBox.ValueMember = "Key";
             faceComboBox.DisplayMember = "Value";
             faceComboBox.SelectedIndex = -1;
+        }
+
+        // Fonction pour charger les données du fichier characters.txt
+        private void LoadCharacterData()
+        {
+            string filePath = "characters.txt";
+
+            // Vérifier si le fichier existe
+            if (File.Exists(filePath))
+            {
+                // Lire le fichier
+                foreach (var line in File.ReadLines(filePath).Skip(1))  // Ignorer la première ligne (entête)
+                {
+                    var parts = line.Split('|');
+                    if (parts.Length == 2)
+                    {
+                        string hexId = parts[0].Trim();
+                        string name = parts[1].Trim();
+
+                        // Convertir l'ID hexadécimal en little endian (assumer qu'il est déjà en little endian)
+                        uint id = ConvertHexToUInt32(hexId);
+
+                        if (!Faces.IEGO.ContainsKey(id))
+                        {
+                            Faces.IEGO[id] = name;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fonction pour convertir un hexadécimal little endian en uint
+        private uint ConvertHexToUInt32(string hex)
+        {
+            // Retirer le préfixe "0x" s'il existe
+            if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                hex = hex.Substring(2);
+            }
+
+            // Assurer que le string est bien dans un format valide
+            if (hex.Length == 8)
+            {
+                byte[] bytes = new byte[4];
+                for (int i = 0; i < 4; i++)
+                {
+                    bytes[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+                }
+
+                // Convertir en Little Endian
+                return BitConverter.ToUInt32(bytes.Reverse().ToArray(), 0);
+            }
+
+            throw new FormatException("Le format de l'ID hexadécimal est incorrect.");
         }
 
         private void ModelComboBox_SelectedIndex(ComboBox combobox, uint keyToFind)
@@ -153,7 +210,7 @@ namespace Nyanko
                                 if (myFile != null)
                                 {
                                     // you should use this
-                                    if (Path.GetExtension(file) == ".bin" && myFile.Strings.Count == 0)
+                                    if (Path.GetExtension(file) == ".bin" && (myFile.Nouns.Count == 0 && myFile.Texts.Count == 0))
                                     {
                                         continue;
                                     }

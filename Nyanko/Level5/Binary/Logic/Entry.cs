@@ -2,9 +2,11 @@
 using System.IO;
 using System.Text;
 using System.Linq;
-using System.Reflection;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using Nyanko.Level5.Binary.Logic;
+using Nyanko.Level5.Binary;
 using Nyanko.Tools;
 
 namespace Nyanko.Level5.Binary.Logic
@@ -75,6 +77,41 @@ namespace Nyanko.Level5.Binary.Logic
             }
 
             return textDictionary;
+        }
+
+        public List<string> GetStringsAsList()
+        {
+            List<string> output = new List<string>();
+
+            // Add the text of this entry (if it has string type variables)
+            foreach (Variable variable in Variables)
+            {
+                if (variable.Type == Type.String)
+                {
+                    if (variable.Value is string stringValue)
+                    {
+                        if (stringValue != null)
+                        {
+                            output.Add(stringValue);
+                        }
+                    }
+                    else if (variable.Value is OffsetTextPair offsetTextPair)
+                    {
+                        if (!offsetTextPair.IsNull)
+                        {
+                            output.Add(offsetTextPair.Text);
+                        }
+                    }
+                }
+            }
+
+            // Recursively traverse children and add their text
+            foreach (Entry childEntry in Children)
+            {
+                output.AddRange(childEntry.GetStringsAsList());
+            }
+
+            return output;
         }
 
         public string GetName()
@@ -401,8 +438,15 @@ namespace Nyanko.Level5.Binary.Logic
                             switch (variable.Type)
                             {
                                 case Type.String:
-                                    OffsetTextPair offsetTextPair = variable.Value as OffsetTextPair;
-                                    writer.Write(offsetTextPair.Offset);
+                                    if (variable.Value is null)
+                                    {
+                                        writer.Write(-1);
+                                    }
+                                    else
+                                    {
+                                        OffsetTextPair offsetTextPair = variable.Value as OffsetTextPair;
+                                        writer.Write(offsetTextPair.Offset);
+                                    }
                                     break;
                                 case Type.Int:
                                     writer.Write(Convert.ToInt32(variable.Value));
@@ -530,6 +574,36 @@ namespace Nyanko.Level5.Binary.Logic
             }
         }
 
+        public void UpdateOffsetsRecursive(Dictionary<int, string> strings)
+        {
+            foreach (Variable variable in Variables)
+            {
+                if (variable.Type == Type.String)
+                {
+                    if (variable.Value is string stringValue)
+                    {
+                        if (strings.ContainsValue(stringValue))
+                        {
+                            int offset = strings.FirstOrDefault(x => x.Value == stringValue).Key;
+                            variable.Value = new OffsetTextPair(offset, stringValue);
+                        }
+                    }
+                    else if (variable.Value is OffsetTextPair offsetTextPair)
+                    {
+                        if (strings.ContainsValue(offsetTextPair.Text))
+                        {
+                            offsetTextPair.Offset = strings.FirstOrDefault(x => x.Value == offsetTextPair.Text).Key;
+                        }
+                    }
+                }
+            }
+
+            foreach (Entry childEntry in Children)
+            {
+                childEntry.UpdateOffsetsRecursive(strings);
+            }
+        }
+
         public void UpdateString(Dictionary<int, int> newOffsets, Dictionary<int, string> newStrings)
         {
             foreach (Variable variable in Variables)
@@ -577,7 +651,7 @@ namespace Nyanko.Level5.Binary.Logic
             T structure = new T();
 
             int valueIndex = 0;
-            var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
+            var properties = typeof(T).GetProperties();
             object[] values = Variables.Select(y => y.Value).ToArray();
 
             for (int i = 0; i < properties.Length; i++)
@@ -593,7 +667,53 @@ namespace Nyanko.Level5.Binary.Logic
                 }
                 else
                 {
-                    if (valueIndex < values.Count())
+                    if (valueIndex < values.Length)
+                    {
+                        if (values[valueIndex] is OffsetTextPair offsetTextPair)
+                        {
+                            if (propertyType == typeof(string))
+                            {
+                                values[valueIndex] = offsetTextPair.Text;
+                            }
+                            else
+                            {
+                                values[valueIndex] = offsetTextPair.Offset;
+                            }
+                        }
+
+                        object convertedValue = Convert.ChangeType(values[valueIndex], propertyType);
+                        property.SetValue(structure, convertedValue);
+                        valueIndex++;
+                    }
+                }
+            }
+
+            return structure;
+        }
+
+        public object ToClass(System.Type type)
+        {
+            // Create an instance of the specified type
+            object structure = Activator.CreateInstance(type);
+
+            int valueIndex = 0;
+            var properties = type.GetProperties();
+            object[] values = Variables.Select(y => y.Value).ToArray();
+
+            for (int i = 0; i < properties.Length; i++)
+            {
+                var property = properties[i];
+                var propertyType = property.PropertyType;
+
+                if (propertyType.IsArray)
+                {
+                    int arrayLength = ((Array)property.GetValue(structure)).Length;
+                    Array.Copy(values, valueIndex, (Array)property.GetValue(structure), 0, arrayLength);
+                    valueIndex += arrayLength;
+                }
+                else
+                {
+                    if (valueIndex < values.Length)
                     {
                         if (values[valueIndex] is OffsetTextPair offsetTextPair)
                         {
@@ -621,7 +741,7 @@ namespace Nyanko.Level5.Binary.Logic
         {
             List<Variable> variableList = new List<Variable>();
 
-            var properties = typeof(T).GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
+            var properties = structure.GetType().GetProperties();
 
             foreach (var property in properties)
             {
@@ -651,9 +771,6 @@ namespace Nyanko.Level5.Binary.Logic
                                 case TypeCode.Single:
                                     variableTypeElementFromArray = Type.Float;
                                     break;
-                                case TypeCode.Boolean:
-                                    variableTypeElementFromArray = Type.Int;
-                                    break;
                                 default:
                                     variableTypeElementFromArray = Type.Int;
                                     arrayElements[i] = 0;
@@ -666,19 +783,22 @@ namespace Nyanko.Level5.Binary.Logic
                     }
                     else
                     {
-                        switch (System.Type.GetTypeCode(propertyType))
+                        switch (propertyValue.GetType().Name)
                         {
-                            case TypeCode.String:
+                            case "String":
                                 variableType = Type.String;
                                 break;
-                            case TypeCode.Int32:
+                            case "Int32":
                                 variableType = Type.Int;
                                 break;
-                            case TypeCode.Single:
+                            case "Single":
                                 variableType = Type.Float;
                                 break;
-                            case TypeCode.Boolean:
+                            case "Boolean":
                                 variableType = Type.Int;
+                                break;
+                            case "OffsetTextPair":
+                                variableType = Type.String;
                                 break;
                             default:
                                 variableType = Type.Int;
@@ -690,7 +810,10 @@ namespace Nyanko.Level5.Binary.Logic
                         variableList.Add(new Variable(variableType, variableValue));
                     }
                 }
-
+                else
+                {
+                    variableList.Add(new Variable(Type.String, null));
+                }
             }
 
             Variables = variableList;
