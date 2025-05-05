@@ -15,6 +15,8 @@ using Nyanko.Level5.T2bþ;
 using Nyanko.Level5.Binary.Logic;
 using Nyanko.Common;
 using Nyanko.UserControls;
+using System.Runtime.InteropServices.ComTypes;
+using System.Text.RegularExpressions;
 
 namespace Nyanko
 {
@@ -99,6 +101,95 @@ namespace Nyanko
             if (textTreeView.Nodes.Count > 0)
             {
                 textTreeView.SelectedNode = textTreeView.Nodes[0];
+            }
+        }
+
+        private string RemoveAllExtensionsWithRegex(string fileName)
+        {
+            return Regex.Replace(fileName, @"\..+$", string.Empty);
+        }
+
+        private void BulkConverter(string outputExtension, string[] searchExtensions, Encoding encoding)
+        {
+            // Open a folder selection dialog
+            using (var folderDialog = new FolderBrowserDialog())
+            {
+                folderDialog.Description = "Select a folder to search for files";
+
+                if (folderDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string selectedFolder = folderDialog.SelectedPath;
+
+                    // Recursively search for files with the specified extensions
+                    var files = Directory.GetFiles(selectedFolder, "*.*", SearchOption.AllDirectories)
+                                         .Where(file => searchExtensions.Any(ext => file.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+                                         .ToList();
+
+                    // Display the found files
+                    if (files.Any())
+                    {
+                        foreach (var file in files)
+                        {
+                            try
+                            {
+                                T2bþ myFile = null;
+
+                                // Initialize myFile based on file extension
+                                switch (Path.GetExtension(file))
+                                {
+                                    case ".txt":
+                                        myFile = new T2bþ(File.ReadAllLines(file));
+                                        break;
+                                    case ".xml":
+                                        myFile = new T2bþ(File.ReadAllText(file));
+                                        break;
+                                    case ".bin":
+                                        myFile = new T2bþ(File.OpenRead(file));
+                                        break;
+                                    default:
+                                        continue;
+                                }
+
+                                if (myFile != null)
+                                {
+                                    // you should use this
+                                    if (Path.GetExtension(file) == ".bin" && myFile.Strings.Count == 0)
+                                    {
+                                        continue;
+                                    }
+
+                                    // Determine output path
+                                    string outputPath = Path.Combine(
+                                        Path.GetDirectoryName(file) ?? string.Empty,
+                                        RemoveAllExtensionsWithRegex(Path.GetFileName(file)) + outputExtension);
+
+                                    // Handle output based on extension
+                                    switch (outputExtension.ToLower())
+                                    {
+                                        case ".txt":
+                                            File.WriteAllLines(outputPath, myFile.ExportToTxt());
+                                            break;
+                                        case ".xml":
+                                            File.WriteAllLines(outputPath, myFile.ExportToXML());
+                                            break;
+                                        case "cfg.bin":
+                                            myFile.Encoding = encoding;
+                                            myFile.Save(outputPath, false);
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error processing file {file}: {ex.Message}");
+                            }
+                        }
+                    }
+
+                    MessageBox.Show("Done!");
+                }
             }
         }
 
@@ -500,6 +591,33 @@ namespace Nyanko
                     textConfig.WashaID = -1;
                 }            
             }
+        }
+
+        private void TxtToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            BulkConverter(".txt", new string[] { ".bin", ".xml" }, null);
+        }
+
+        private void XmlToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            BulkConverter(".xml", new string[] { ".bin", ".txt" }, null);
+        }
+
+        private void CfgBinToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Display a message box to the user
+            DialogResult result = MessageBox.Show(
+                "Do you want to use UTF-8 encoding? If you choose No, Shift-JIS encoding will be used.",
+                "Encoding Selection",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            // Determine the encoding based on the user's choice
+            var encoding = result == DialogResult.Yes ? System.Text.Encoding.UTF8 : System.Text.Encoding.GetEncoding("Shift-JIS");
+
+            // Pass the encoding to the bulk converter or use it as needed
+            BulkConverter("cfg.bin", new string[] { ".txt", ".xml" }, encoding);
         }
     }
 }

@@ -33,8 +33,8 @@ namespace Nyanko
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(NyankoWindow));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -56,6 +56,10 @@ namespace Nyanko
             this.label1 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.batchConvertToToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.txtToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.xmlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cfgBinToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.textTypeContextMenuStrip.SuspendLayout();
             this.textItemContextMenuStrip.SuspendLayout();
@@ -69,7 +73,8 @@ namespace Nyanko
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.toolsToolStripMenuItem});
+            this.toolsToolStripMenuItem,
+            this.batchConvertToToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(694, 24);
@@ -86,28 +91,28 @@ namespace Nyanko
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
-            // newToolStripMenuItem
-            // 
-            this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.newToolStripMenuItem.Text = "New";
-            this.newToolStripMenuItem.Click += new System.EventHandler(this.NewToolStripMenuItem_Click);
-            // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
+            // 
+            // newToolStripMenuItem
+            // 
+            this.newToolStripMenuItem.Name = "newToolStripMenuItem";
+            this.newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
+            this.newToolStripMenuItem.Text = "New";
+            this.newToolStripMenuItem.Click += new System.EventHandler(this.NewToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Enabled = false;
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(146, 22);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
@@ -118,7 +123,7 @@ namespace Nyanko
             this.expandAllToolStripMenuItem,
             this.collapseAllToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             // 
             // searchToolStripMenuItem
@@ -300,6 +305,37 @@ namespace Nyanko
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             // 
+            // batchConvertToToolStripMenuItem
+            // 
+            this.batchConvertToToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.txtToolStripMenuItem,
+            this.xmlToolStripMenuItem,
+            this.cfgBinToolStripMenuItem});
+            this.batchConvertToToolStripMenuItem.Name = "batchConvertToToolStripMenuItem";
+            this.batchConvertToToolStripMenuItem.Size = new System.Drawing.Size(110, 20);
+            this.batchConvertToToolStripMenuItem.Text = "Batch Convert To";
+            // 
+            // txtToolStripMenuItem
+            // 
+            this.txtToolStripMenuItem.Name = "txtToolStripMenuItem";
+            this.txtToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.txtToolStripMenuItem.Text = "Txt";
+            this.txtToolStripMenuItem.Click += new System.EventHandler(this.TxtToolStripMenuItem_Click);
+            // 
+            // xmlToolStripMenuItem
+            // 
+            this.xmlToolStripMenuItem.Name = "xmlToolStripMenuItem";
+            this.xmlToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.xmlToolStripMenuItem.Text = "Xml";
+            this.xmlToolStripMenuItem.Click += new System.EventHandler(this.XmlToolStripMenuItem_Click);
+            // 
+            // cfgBinToolStripMenuItem
+            // 
+            this.cfgBinToolStripMenuItem.Name = "cfgBinToolStripMenuItem";
+            this.cfgBinToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.cfgBinToolStripMenuItem.Text = "Cfg Bin";
+            this.cfgBinToolStripMenuItem.Click += new System.EventHandler(this.CfgBinToolStripMenuItem_Click);
+            // 
             // NyankoWindow
             // 
             this.AllowDrop = true;
@@ -356,6 +392,10 @@ namespace Nyanko
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.ToolStripMenuItem batchConvertToToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem txtToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem xmlToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cfgBinToolStripMenuItem;
     }
 }
 
