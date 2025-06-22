@@ -43,7 +43,7 @@ Nyanko is a tool based on [CfgBinEditor](https://github.com/Tiniifan/CfgBinEdito
 * .xml
 
   ```xml
-  <?xml version="1.0"?>
+  <?xml version="1.0" encoding="utf-8"?>
   <Root>
   	<Texts>
   	 <TextConfig crc32="0x8A8209CC" washa="0xFFFFFFFF">
