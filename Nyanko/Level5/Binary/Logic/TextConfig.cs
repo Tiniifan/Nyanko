@@ -22,7 +22,9 @@ namespace Nyanko.Level5.Binary.Logic
 
     public class StringLevel5
     {
-        public int Variance;
+        public int TextNumber;
+
+        public int VarianceText;
 
         public string Text;
 
@@ -31,10 +33,17 @@ namespace Nyanko.Level5.Binary.Logic
 
         }
 
-        public StringLevel5(int variance, string text)
+        public StringLevel5(int textNumber, string text)
         {
-            Variance = variance;
+            TextNumber = textNumber;
             Text = text;
+        }
+
+        public StringLevel5(int textNumber, string text, int varianceText)
+        {
+            TextNumber = textNumber;
+            Text = text;
+            VarianceText = varianceText;
         }
 
         public override string ToString()

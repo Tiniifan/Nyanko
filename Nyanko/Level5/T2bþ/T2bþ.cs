@@ -47,6 +47,8 @@ namespace Nyanko.Level5.T2bþ
                     x => Convert.ToInt32(x.Variables[0].Value),
                     y =>
                     {
+                        int variableCount = y.Variables.Count;
+
                         int variable0Value = Convert.ToInt32(y.Variables[0].Value);
                         int washaID = -1;
                         List<StringLevel5> strings = new List<StringLevel5>();
@@ -60,9 +62,17 @@ namespace Nyanko.Level5.T2bþ
                             }
                         }
 
+                        int varianceKey = 0;
+
+                        if (variableCount > 3)
+                        {
+                            varianceKey = Convert.ToInt32(y.Variables[3].Value);
+                        }
+
                         strings.Add(new StringLevel5(
                             Convert.ToInt32(y.Variables[1].Value),
-                            (y.Variables[2].Value as OffsetTextPair).Text
+                            (y.Variables[2].Value as OffsetTextPair).Text, 
+                            varianceKey
                         ));
 
                         return new TextConfig(strings, washaID);
@@ -90,8 +100,9 @@ namespace Nyanko.Level5.T2bþ
                         List<StringLevel5> strings = new List<StringLevel5>
                         {
                             new StringLevel5(
-                                Convert.ToInt32(y.Variables[1].Value),
-                                (y.Variables[5].Value as OffsetTextPair).Text
+                                0,
+                                (y.Variables[5].Value as OffsetTextPair).Text,
+                                Convert.ToInt32(y.Variables[1].Value)
                             )
                         };
 
@@ -127,12 +138,28 @@ namespace Nyanko.Level5.T2bþ
 
                 List<StringLevel5> strings = new List<StringLevel5>();
 
-                for (int i = 0; i < stringNodes.Count; i++)
+                foreach (XmlNode stringNode in stringNodes)
                 {
-                    strings.Add(new StringLevel5(i, stringNodes[i].Attributes.GetNamedItem("value").Value));
+                    string value = stringNode.Attributes.GetNamedItem("value").Value;
+
+                    // Get textNumber and varianceKey from XML attributes
+                    int textNumber = 0;
+                    int varianceKey = 0;
+
+                    if (stringNode.Attributes.GetNamedItem("textNumber") != null)
+                    {
+                        textNumber = int.Parse(stringNode.Attributes.GetNamedItem("textNumber").Value);
+                    }
+
+                    if (stringNode.Attributes.GetNamedItem("varianceKey") != null)
+                    {
+                        varianceKey = int.Parse(stringNode.Attributes.GetNamedItem("varianceKey").Value);
+                    }
+
+                    strings.Add(new StringLevel5(textNumber, value, varianceKey));
                 }
 
-                // Determine whether it's Texts or Nouns and set washaID accordingly
+                // Determine if it's Texts or Nouns and set washaID accordingly
                 if (textNode.ParentNode.Name == "Texts")
                 {
                     TextConfig textConfig = new TextConfig(strings, washa);
@@ -154,6 +181,8 @@ namespace Nyanko.Level5.T2bþ
 
             int currentIndex = 0;
             TextConfig currentTextConfig = null;
+            int currentCrc32 = 0;
+            string currentType = "";
 
             foreach (string line in lines)
             {
@@ -161,6 +190,7 @@ namespace Nyanko.Level5.T2bþ
 
                 if (match != null)
                 {
+                    // Nyanko format detected
                     string type = match.Groups[1].Value;
                     int crc32 = int.Parse(match.Groups[2].Value, System.Globalization.NumberStyles.HexNumber);
                     int washa = -1;
@@ -170,26 +200,42 @@ namespace Nyanko.Level5.T2bþ
                     }
 
                     currentTextConfig = new TextConfig(new List<StringLevel5>(), washa);
+                    currentCrc32 = crc32;
+                    currentType = type.Trim();
 
-                    if (type.Trim().Equals("Texts"))
+                    if (currentType.Equals("Texts"))
                     {
                         Texts[crc32] = currentTextConfig;
                     }
-                    else if (type.Trim().Equals("Nouns"))
+                    else if (currentType.Equals("Nouns"))
                     {
                         Nouns[crc32] = currentTextConfig;
                     }
                 }
                 else if (!string.IsNullOrWhiteSpace(line))
                 {
-                    if (currentTextConfig != null)
+                    // Check if it's a nyanko format entry with [textNumber; varianceKey]
+                    Match entryMatch = Regex.Match(line.Trim(), @"^\[(\d+);\s*(\d+)\]\s*(.*)$");
+
+                    if (entryMatch.Success && currentTextConfig != null)
                     {
-                        currentTextConfig.Strings.Add(new StringLevel5(currentTextConfig.Strings.Count, line));
-                    } else
+                        // Nyanko format entry
+                        int textNumber = int.Parse(entryMatch.Groups[1].Value);
+                        int varianceKey = int.Parse(entryMatch.Groups[2].Value);
+                        string text = entryMatch.Groups[3].Value;
+
+                        currentTextConfig.Strings.Add(new StringLevel5(textNumber, text, varianceKey));
+                    }
+                    else if (currentTextConfig != null)
                     {
-                        Texts.Add(currentIndex, new TextConfig(new List<StringLevel5>() { new StringLevel5(0, line) }, -1));
-                        currentTextConfig = null;
-                    }                   
+                        // Regular text line in nyanko format block
+                        currentTextConfig.Strings.Add(new StringLevel5(currentTextConfig.Strings.Count, line.Trim()));
+                    }
+                    else
+                    {
+                        // Base format - each line is a separate text entry
+                        Texts.Add(currentIndex, new TextConfig(new List<StringLevel5>() { new StringLevel5(0, line.Trim()) }, -1));
+                    }
                 }
 
                 currentIndex++;
@@ -201,10 +247,12 @@ namespace Nyanko.Level5.T2bþ
             if (Regex.IsMatch(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/0x([A-Fa-f0-9]+)\]"))
             {
                 return Regex.Match(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/0x([A-Fa-f0-9]+)\]");
-            } else if (Regex.IsMatch(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/(-1)\]"))
+            }
+            else if (Regex.IsMatch(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/(-1)\]"))
             {
                 return Regex.Match(line, @"\[(\w+)/0x([A-Fa-f0-9]+)/(-1)\]");
-            } else
+            }
+            else
             {
                 return null;
             }
@@ -259,9 +307,9 @@ namespace Nyanko.Level5.T2bþ
                     Entry textItemEntry = new Entry("TEXT_INFO_" + i, new List<Variable>()
                         {
                             new Variable(Nyanko.Level5.Binary.Logic.Type.Int, textItem.Key),
-                            new Variable(Nyanko.Level5.Binary.Logic.Type.Int, i),
+                            new Variable(Nyanko.Level5.Binary.Logic.Type.Int, textValue.TextNumber),
                             new Variable(Binary.Logic.Type.String, new OffsetTextPair(strings.FirstOrDefault(x => x.Value == textValue.Text).Key, textValue.Text)),
-                            new Variable(Binary.Logic.Type.Int, 0),
+                            new Variable(Binary.Logic.Type.Int, textValue.VarianceText),
                         }, Encoding
                     );
 
@@ -328,7 +376,7 @@ namespace Nyanko.Level5.T2bþ
                     Entry textItemEntry = new Entry("NOUN_INFO_" + i, new List<Variable>()
                         {
                             new Variable(Binary.Logic.Type.Int, nounItem.Key),
-                            new Variable(Binary.Logic.Type.Int, i),
+                            new Variable(Binary.Logic.Type.Int, textValue.VarianceText),
                             new Variable(Binary.Logic.Type.String,  new OffsetTextPair(-1, null)),
                             new Variable(Binary.Logic.Type.String,  new OffsetTextPair(-1, null)),
                             new Variable(Binary.Logic.Type.String,  new OffsetTextPair(-1, null)),
@@ -382,53 +430,67 @@ namespace Nyanko.Level5.T2bþ
         public string[] ConvertToXml(Dictionary<int, TextConfig> texts, string baliseName)
         {
             List<string> xmlStrings = new List<string>();
-
             StringBuilder xmlBuilder = new StringBuilder();
-            xmlBuilder.AppendLine("<" + baliseName + ">");
+
+            xmlBuilder.AppendLine($"  <{baliseName}>");
 
             foreach (var kvp in texts)
             {
                 int crc32 = kvp.Key;
                 string washa = "0x" + kvp.Value.WashaID.ToString("X8");
-
-                xmlBuilder.AppendLine($" <TextConfig crc32=\"0x{crc32.ToString("X8")}\" washa=\"{washa}\">");
+                xmlBuilder.AppendLine($"    <TextConfig crc32=\"0x{crc32:X8}\" washa=\"{washa}\">");
 
                 foreach (var stringLevel5 in kvp.Value.Strings)
                 {
-                    xmlBuilder.AppendLine($"  <String value=\"{stringLevel5.Text.Replace("<", "&lt;").Replace(">", "V&gt;").Replace("\"", "&quot;")}\" />");
+                    // Add textNumber and varianceKey attributes
+                    string escapedText = EscapeXmlString(stringLevel5.Text);
+                    xmlBuilder.AppendLine($"      <String textNumber=\"{stringLevel5.TextNumber}\" varianceKey=\"{stringLevel5.VarianceText}\" value=\"{escapedText}\" />");
                 }
 
-                xmlBuilder.AppendLine(" </TextConfig>");
+                xmlBuilder.AppendLine("    </TextConfig>");
             }
 
-            xmlBuilder.AppendLine("</" + baliseName + ">");
+            xmlBuilder.AppendLine($"  </{baliseName}>");
             xmlStrings.Add(xmlBuilder.ToString());
-
             return xmlStrings.ToArray();
+        }
+
+        private string EscapeXmlString(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            return text.Replace("&", "&amp;")
+                       .Replace("<", "&lt;")
+                       .Replace(">", "&gt;")
+                       .Replace("\"", "&quot;")
+                       .Replace("'", "&apos;");
         }
 
         public string[] ExportToXML()
         {
             List<string> xmlStrings = new List<string>();
 
-            // Ajouter la déclaration XML
-            xmlStrings.Add("<?xml version=\"1.0\"?>");
+            // Add XML declaration with encoding support
+            string encodingName = this.Encoding?.WebName ?? "utf-8";
+            xmlStrings.Add($"<?xml version=\"1.0\" encoding=\"{encodingName}\"?>");
 
-            // Ajouter l'élément racine <Root>
+            // Add root element
             xmlStrings.Add("<Root>");
 
-            // Ajouter les éléments <Texts> et <Nouns>
-            if (Texts.Count > 0)
+            // Add Texts section if it exists
+            if (Texts != null && Texts.Count > 0)
             {
                 xmlStrings.AddRange(ConvertToXml(Texts, "Texts"));
             }
 
-            if (Nouns.Count > 0)
+            // Add Nouns section if it exists
+            if (Nouns != null && Nouns.Count > 0)
             {
                 xmlStrings.AddRange(ConvertToXml(Nouns, "Nouns"));
             }
 
-            // Fermer l'élément racine </Root>
+            // Close root element
             xmlStrings.Add("</Root>");
 
             return xmlStrings.ToArray();
@@ -438,36 +500,46 @@ namespace Nyanko.Level5.T2bþ
         {
             List<string> txtStrings = new List<string>();
 
+            // Calculate maximum width for alignment
+            int maxPrefixWidth = 0;
+            foreach (var kvp in Texts.Concat(Nouns))
+            {
+                foreach (var stringLevel5 in kvp.Value.Strings)
+                {
+                    int prefixLength = $"[{stringLevel5.TextNumber}; {stringLevel5.VarianceText}]".Length;
+                    if (prefixLength > maxPrefixWidth)
+                        maxPrefixWidth = prefixLength;
+                }
+            }
+
             foreach (var kvp in Texts)
             {
                 int crc32 = kvp.Key;
                 string washa = "0x" + kvp.Value.WashaID.ToString("X8");
-
                 StringBuilder textBuilder = new StringBuilder();
-
                 textBuilder.AppendFormat("[Texts/0x{0:X8}/{1}] {2}", crc32, washa, Environment.NewLine);
 
                 foreach (var stringLevel5 in kvp.Value.Strings)
                 {
-                    textBuilder.AppendLine(stringLevel5.Text);
+                    // Use PadRight with calculated width
+                    string formattedPrefix = $"[{stringLevel5.TextNumber}; {stringLevel5.VarianceText}]".PadRight(maxPrefixWidth);
+                    textBuilder.AppendLine($"{formattedPrefix} {stringLevel5.Text}");
                 }
-
                 txtStrings.Add(textBuilder.ToString());
             }
 
             foreach (var kvp in Nouns)
             {
                 int crc32 = kvp.Key;
-
                 StringBuilder textBuilder = new StringBuilder();
-
                 textBuilder.AppendFormat("[Nouns/0x{0:X8}/-1] {1}", crc32, Environment.NewLine);
 
                 foreach (var stringLevel5 in kvp.Value.Strings)
                 {
-                    textBuilder.AppendLine(stringLevel5.Text);
+                    // Use PadRight with calculated width
+                    string formattedPrefix = $"[{stringLevel5.TextNumber}; {stringLevel5.VarianceText}]".PadRight(maxPrefixWidth);
+                    textBuilder.AppendLine($"{formattedPrefix} {stringLevel5.Text}");
                 }
-
                 txtStrings.Add(textBuilder.ToString());
             }
 

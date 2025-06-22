@@ -40,6 +40,10 @@ namespace Nyanko
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.expandAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.collapseAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.batchConvertToToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.txtToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.xmlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cfgBinToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textTextBox = new System.Windows.Forms.TextBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.textTreeView = new System.Windows.Forms.TreeView();
@@ -53,13 +57,16 @@ namespace Nyanko
             this.removeKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.attachFaceGroupBox = new System.Windows.Forms.GroupBox();
             this.faceComboBox = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.faceLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.batchConvertToToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.txtToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.xmlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.cfgBinToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.varianceKeyGroupBox = new System.Windows.Forms.GroupBox();
+            this.varianceKeyNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.varianceKeyLabel = new System.Windows.Forms.Label();
+            this.dialogBoxContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.addDialogboxToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addTextToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteDialogboxToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.textTypeContextMenuStrip.SuspendLayout();
             this.textItemContextMenuStrip.SuspendLayout();
@@ -67,6 +74,9 @@ namespace Nyanko
             this.attachFaceGroupBox.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.varianceKeyGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.varianceKeyNumericUpDown)).BeginInit();
+            this.dialogBoxContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -77,7 +87,7 @@ namespace Nyanko
             this.batchConvertToToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(694, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(884, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -150,16 +160,47 @@ namespace Nyanko
             this.collapseAllToolStripMenuItem.Text = "Collapse All";
             this.collapseAllToolStripMenuItem.Click += new System.EventHandler(this.CollapseAllToolStripMenuItem_Click);
             // 
+            // batchConvertToToolStripMenuItem
+            // 
+            this.batchConvertToToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.txtToolStripMenuItem,
+            this.xmlToolStripMenuItem,
+            this.cfgBinToolStripMenuItem});
+            this.batchConvertToToolStripMenuItem.Name = "batchConvertToToolStripMenuItem";
+            this.batchConvertToToolStripMenuItem.Size = new System.Drawing.Size(110, 20);
+            this.batchConvertToToolStripMenuItem.Text = "Batch Convert To";
+            // 
+            // txtToolStripMenuItem
+            // 
+            this.txtToolStripMenuItem.Name = "txtToolStripMenuItem";
+            this.txtToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.txtToolStripMenuItem.Text = "Txt";
+            this.txtToolStripMenuItem.Click += new System.EventHandler(this.TxtToolStripMenuItem_Click);
+            // 
+            // xmlToolStripMenuItem
+            // 
+            this.xmlToolStripMenuItem.Name = "xmlToolStripMenuItem";
+            this.xmlToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.xmlToolStripMenuItem.Text = "Xml";
+            this.xmlToolStripMenuItem.Click += new System.EventHandler(this.XmlToolStripMenuItem_Click);
+            // 
+            // cfgBinToolStripMenuItem
+            // 
+            this.cfgBinToolStripMenuItem.Name = "cfgBinToolStripMenuItem";
+            this.cfgBinToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.cfgBinToolStripMenuItem.Text = "Cfg Bin";
+            this.cfgBinToolStripMenuItem.Click += new System.EventHandler(this.CfgBinToolStripMenuItem_Click);
+            // 
             // textTextBox
             // 
             this.textTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textTextBox.Enabled = false;
-            this.textTextBox.Location = new System.Drawing.Point(6, 107);
+            this.textTextBox.Location = new System.Drawing.Point(6, 201);
             this.textTextBox.Multiline = true;
             this.textTextBox.Name = "textTextBox";
-            this.textTextBox.Size = new System.Drawing.Size(248, 260);
+            this.textTextBox.Size = new System.Drawing.Size(334, 303);
             this.textTextBox.TabIndex = 2;
             this.textTextBox.TextChanged += new System.EventHandler(this.TextTextBox_TextChanged);
             // 
@@ -173,9 +214,10 @@ namespace Nyanko
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textTreeView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textTreeView.HideSelection = false;
             this.textTreeView.Location = new System.Drawing.Point(3, 3);
             this.textTreeView.Name = "textTreeView";
-            this.textTreeView.Size = new System.Drawing.Size(390, 376);
+            this.textTreeView.Size = new System.Drawing.Size(502, 510);
             this.textTreeView.TabIndex = 6;
             this.textTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.TextTreeView_AfterSelect);
             this.textTreeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.TextTreeView_NodeMouseClick);
@@ -212,10 +254,12 @@ namespace Nyanko
             // 
             this.textKeyContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addTextToolStripMenuItem,
+            this.addDialogboxToolStripMenuItem,
             this.renameKeyToolStripMenuItem,
             this.removeKeyToolStripMenuItem});
             this.textKeyContextMenuStrip.Name = "textKeyContextMenuStrip";
-            this.textKeyContextMenuStrip.Size = new System.Drawing.Size(140, 70);
+            this.textKeyContextMenuStrip.Size = new System.Drawing.Size(153, 92);
+            this.textKeyContextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.TextKeyContextMenuStrip_Opening);
             // 
             // addTextToolStripMenuItem
             // 
@@ -243,11 +287,11 @@ namespace Nyanko
             this.attachFaceGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.attachFaceGroupBox.Controls.Add(this.faceComboBox);
-            this.attachFaceGroupBox.Controls.Add(this.label1);
+            this.attachFaceGroupBox.Controls.Add(this.faceLabel);
             this.attachFaceGroupBox.Enabled = false;
             this.attachFaceGroupBox.Location = new System.Drawing.Point(6, 11);
             this.attachFaceGroupBox.Name = "attachFaceGroupBox";
-            this.attachFaceGroupBox.Size = new System.Drawing.Size(248, 89);
+            this.attachFaceGroupBox.Size = new System.Drawing.Size(334, 89);
             this.attachFaceGroupBox.TabIndex = 7;
             this.attachFaceGroupBox.TabStop = false;
             this.attachFaceGroupBox.Text = "Attach character";
@@ -262,18 +306,18 @@ namespace Nyanko
             "None"});
             this.faceComboBox.Location = new System.Drawing.Point(75, 35);
             this.faceComboBox.Name = "faceComboBox";
-            this.faceComboBox.Size = new System.Drawing.Size(167, 21);
+            this.faceComboBox.Size = new System.Drawing.Size(253, 21);
             this.faceComboBox.TabIndex = 1;
             this.faceComboBox.SelectedIndexChanged += new System.EventHandler(this.FaceComboBox_SelectedIndexChanged);
             // 
-            // label1
+            // faceLabel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 38);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(53, 13);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Character";
+            this.faceLabel.AutoSize = true;
+            this.faceLabel.Location = new System.Drawing.Point(16, 38);
+            this.faceLabel.Name = "faceLabel";
+            this.faceLabel.Size = new System.Drawing.Size(53, 13);
+            this.faceLabel.TabIndex = 0;
+            this.faceLabel.Text = "Character";
             // 
             // tableLayoutPanel1
             // 
@@ -289,7 +333,7 @@ namespace Nyanko
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(670, 382);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(860, 516);
             this.tableLayoutPanel1.TabIndex = 8;
             // 
             // groupBox1
@@ -297,51 +341,89 @@ namespace Nyanko
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.varianceKeyGroupBox);
             this.groupBox1.Controls.Add(this.attachFaceGroupBox);
             this.groupBox1.Controls.Add(this.textTextBox);
-            this.groupBox1.Location = new System.Drawing.Point(399, 3);
+            this.groupBox1.Location = new System.Drawing.Point(511, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(268, 376);
+            this.groupBox1.Size = new System.Drawing.Size(346, 510);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             // 
-            // batchConvertToToolStripMenuItem
+            // varianceKeyGroupBox
             // 
-            this.batchConvertToToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.txtToolStripMenuItem,
-            this.xmlToolStripMenuItem,
-            this.cfgBinToolStripMenuItem});
-            this.batchConvertToToolStripMenuItem.Name = "batchConvertToToolStripMenuItem";
-            this.batchConvertToToolStripMenuItem.Size = new System.Drawing.Size(110, 20);
-            this.batchConvertToToolStripMenuItem.Text = "Batch Convert To";
+            this.varianceKeyGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.varianceKeyGroupBox.Controls.Add(this.varianceKeyNumericUpDown);
+            this.varianceKeyGroupBox.Controls.Add(this.varianceKeyLabel);
+            this.varianceKeyGroupBox.Enabled = false;
+            this.varianceKeyGroupBox.Location = new System.Drawing.Point(6, 106);
+            this.varianceKeyGroupBox.Name = "varianceKeyGroupBox";
+            this.varianceKeyGroupBox.Size = new System.Drawing.Size(334, 89);
+            this.varianceKeyGroupBox.TabIndex = 8;
+            this.varianceKeyGroupBox.TabStop = false;
+            this.varianceKeyGroupBox.Text = "Variance key";
             // 
-            // txtToolStripMenuItem
+            // varianceKeyNumericUpDown
             // 
-            this.txtToolStripMenuItem.Name = "txtToolStripMenuItem";
-            this.txtToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.txtToolStripMenuItem.Text = "Txt";
-            this.txtToolStripMenuItem.Click += new System.EventHandler(this.TxtToolStripMenuItem_Click);
+            this.varianceKeyNumericUpDown.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.varianceKeyNumericUpDown.Enabled = false;
+            this.varianceKeyNumericUpDown.Location = new System.Drawing.Point(75, 35);
+            this.varianceKeyNumericUpDown.Maximum = new decimal(new int[] {
+            2147483647,
+            0,
+            0,
+            0});
+            this.varianceKeyNumericUpDown.Name = "varianceKeyNumericUpDown";
+            this.varianceKeyNumericUpDown.Size = new System.Drawing.Size(253, 20);
+            this.varianceKeyNumericUpDown.TabIndex = 2;
+            this.varianceKeyNumericUpDown.ValueChanged += new System.EventHandler(this.VarianceKeyNumericUpDown_ValueChanged);
             // 
-            // xmlToolStripMenuItem
+            // varianceKeyLabel
             // 
-            this.xmlToolStripMenuItem.Name = "xmlToolStripMenuItem";
-            this.xmlToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.xmlToolStripMenuItem.Text = "Xml";
-            this.xmlToolStripMenuItem.Click += new System.EventHandler(this.XmlToolStripMenuItem_Click);
+            this.varianceKeyLabel.AutoSize = true;
+            this.varianceKeyLabel.Location = new System.Drawing.Point(16, 38);
+            this.varianceKeyLabel.Name = "varianceKeyLabel";
+            this.varianceKeyLabel.Size = new System.Drawing.Size(44, 13);
+            this.varianceKeyLabel.TabIndex = 1;
+            this.varianceKeyLabel.Text = "Number";
             // 
-            // cfgBinToolStripMenuItem
+            // dialogBoxContextMenuStrip
             // 
-            this.cfgBinToolStripMenuItem.Name = "cfgBinToolStripMenuItem";
-            this.cfgBinToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.cfgBinToolStripMenuItem.Text = "Cfg Bin";
-            this.cfgBinToolStripMenuItem.Click += new System.EventHandler(this.CfgBinToolStripMenuItem_Click);
+            this.dialogBoxContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addTextToolStripMenuItem1,
+            this.deleteDialogboxToolStripMenuItem});
+            this.dialogBoxContextMenuStrip.Name = "dialogBoxContextMenuStrip";
+            this.dialogBoxContextMenuStrip.Size = new System.Drawing.Size(181, 70);
+            // 
+            // addDialogboxToolStripMenuItem
+            // 
+            this.addDialogboxToolStripMenuItem.Name = "addDialogboxToolStripMenuItem";
+            this.addDialogboxToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addDialogboxToolStripMenuItem.Text = "Add Dialogbox";
+            this.addDialogboxToolStripMenuItem.Click += new System.EventHandler(this.AddDialogboxToolStripMenuItem_Click);
+            // 
+            // addTextToolStripMenuItem1
+            // 
+            this.addTextToolStripMenuItem1.Name = "addTextToolStripMenuItem1";
+            this.addTextToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.addTextToolStripMenuItem1.Text = "Add text";
+            this.addTextToolStripMenuItem1.Click += new System.EventHandler(this.AddTextToolStripMenuItem1_Click);
+            // 
+            // deleteDialogboxToolStripMenuItem
+            // 
+            this.deleteDialogboxToolStripMenuItem.Name = "deleteDialogboxToolStripMenuItem";
+            this.deleteDialogboxToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteDialogboxToolStripMenuItem.Text = "Delete dialogbox";
+            this.deleteDialogboxToolStripMenuItem.Click += new System.EventHandler(this.DeleteDialogboxToolStripMenuItem_Click);
             // 
             // NyankoWindow
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(694, 421);
+            this.ClientSize = new System.Drawing.Size(884, 555);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -360,6 +442,10 @@ namespace Nyanko
             this.tableLayoutPanel1.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.varianceKeyGroupBox.ResumeLayout(false);
+            this.varianceKeyGroupBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.varianceKeyNumericUpDown)).EndInit();
+            this.dialogBoxContextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -389,13 +475,20 @@ namespace Nyanko
         private System.Windows.Forms.ToolStripMenuItem collapseAllToolStripMenuItem;
         private System.Windows.Forms.GroupBox attachFaceGroupBox;
         private System.Windows.Forms.ComboBox faceComboBox;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label faceLabel;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.ToolStripMenuItem batchConvertToToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem txtToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem xmlToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cfgBinToolStripMenuItem;
+        private System.Windows.Forms.GroupBox varianceKeyGroupBox;
+        private System.Windows.Forms.Label varianceKeyLabel;
+        private System.Windows.Forms.NumericUpDown varianceKeyNumericUpDown;
+        private System.Windows.Forms.ContextMenuStrip dialogBoxContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem addDialogboxToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addTextToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem deleteDialogboxToolStripMenuItem;
     }
 }
 
