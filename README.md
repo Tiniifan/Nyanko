@@ -4,15 +4,16 @@
 
 **What is a cfg.bin files?**
 
-The cfg.bin files (or simply .bin files) are binary files used in Level 5's 3DS games.
-These files are compiled binaries that look like a tag structure and store various variables used by the games.
-These files don't only contain values like int, float. They can contain texts data.
+The cfg.bin files (or simply .bin files) are binary files used in Level 5's 3DS games.  
+These files are compiled binaries that look like a tag structure and store various variables used by the games.  
+These files don't only contain values like int, float. They can contain texts data.  
 Nyanko is a tool based on [CfgBinEditor](https://github.com/Tiniifan/CfgBinEditor) and Nyanko only focuses on text editing to make it easier.
 
 **Tested on**
 
 * Inazuma Eleven Go ✅
 * Yo-Kai Watch 1 ✅
+* Yo-Kai Watch 4 ✅
 
 **Supported files**
 
@@ -32,14 +33,12 @@ Nyanko is a tool based on [CfgBinEditor](https://github.com/Tiniifan/CfgBinEdito
 
     ```
     [Texts/0x05927998/0xD9CF42CC] 
-    Texte 1
-    Subtexte 1
-
-    [Texts/0x07D4C7C1/0x1B81B43A] 
-    Texte 2
+    [0; 0] First dialogbox
+    [0; 1] Variance text for first dialogbox
+    [1; 0] Second dialog box
 
     [Nouns/0x0616ADF6/0xD714CAFE] 
-    Noun 1
+    [0; 0] Noun 1
     ```
 * .xml
 
@@ -48,13 +47,14 @@ Nyanko is a tool based on [CfgBinEditor](https://github.com/Tiniifan/CfgBinEdito
   <Root>
   	<Texts>
   	 <TextConfig crc32="0x8A8209CC" washa="0xFFFFFFFF">
-  	  <String value="Expert rappeur au grand cœur."/>
-  	  <String value="Bonsoir"/>
+  	  <String textNumber="0" varianceKey="0" value="First dialogbox" />
+  	  <String textNumber="0" varianceKey="1" value="Variance text for first dialogbox" />
+     <String textNumber="1" varianceKey="0" value="Second dialog box" />
   	 </TextConfig>
   	</Texts>
   	<Nouns>
   	 <TextConfig crc32="0x4DED3A46" washa="0xFFFFFFFF">
-  	  <String value="Samguk Han"/>
+     <String textNumber="0" varianceKey="0" value="Samguk Han" />
   	 </TextConfig>
   	</Nouns>
   </Root>
@@ -78,6 +78,6 @@ This allows you to easily extend the application with additional speakers.
 
 **Screenshots**
 
-![](https://i.imgur.com/y7RoWB6.png)
+![screenshot](https://github.com/user-attachments/assets/39055a0e-4333-471a-8616-f4ceb85dfc4f)
 
 [Direct Download Link](https://github.com/Tiniifan/Nyanko/releases/latest/download/Nyanko.exe)
