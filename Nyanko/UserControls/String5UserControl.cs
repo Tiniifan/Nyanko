@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualBasic;
 using Sunny.UI;
 using StudioElevenLib.Level5.Text.Logic;
@@ -81,12 +82,25 @@ namespace Nyanko.UserControls
                 TreeNode keyNode = CreateNode(keyDisplayName, keyTag, textKeyContextMenuStrip, keyHex);
                 bool keyHasMatches = false;
 
+                // Group item nodes by TextNumber to display variances as sub-nodes of their base node
+                Dictionary<int, TreeNode> parentNodesByTextNumber = new Dictionary<int, TreeNode>();
+
                 foreach (StringLevel5 stringLevel5 in item.Value.Strings)
                 {
                     if (IsMatch(stringLevel5.Text, filterText))
                     {
-                        TreeNode nounValueNode = CreateNode(CleanTextForNode(stringLevel5.Text), itemTag, textItemContextMenuStrip);
-                        keyNode.Nodes.Add(nounValueNode);
+                        TreeNode nounValueNode = CreateNode(CleanTextForNode(stringLevel5.Text), itemTag, textItemContextMenuStrip, null, stringLevel5);
+
+                        if (!parentNodesByTextNumber.ContainsKey(stringLevel5.TextNumber))
+                        {
+                            keyNode.Nodes.Add(nounValueNode);
+                            parentNodesByTextNumber[stringLevel5.TextNumber] = nounValueNode;
+                        }
+                        else
+                        {
+                            parentNodesByTextNumber[stringLevel5.TextNumber].Nodes.Add(nounValueNode);
+                        }
+
                         keyHasMatches = true;
                         occurrencesCount++;
                     }
@@ -257,12 +271,12 @@ namespace Nyanko.UserControls
                    source.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private TreeNode CreateNode(string text, string tag, ContextMenuStrip contextMenu, string name = null)
+        private TreeNode CreateNode(string text, string tag, ContextMenuStrip contextMenu, string name = null, StringLevel5 stringRef = null)
         {
             return new TreeNode(text)
             {
                 Name = name ?? text,
-                Tag = tag,
+                Tag = new NodeTagInfo(tag, stringRef),
                 ContextMenuStrip = null
             };
         }
@@ -282,34 +296,32 @@ namespace Nyanko.UserControls
 
         private void ReorganizeTextNumbers(int keyIndex)
         {
+            // Reorganizes TextNumber properties sequentially while keeping variance structures intact
+
             if (Texts.ContainsKey(keyIndex))
             {
                 var strings = Texts[keyIndex].Strings;
-                for (int i = 0; i < strings.Count; i++)
+                var oldToNewMap = new Dictionary<int, int>();
+                int nextTextNumber = 0;
+                foreach (var s in strings)
                 {
-                    strings[i].TextNumber = i;
+                    if (!oldToNewMap.ContainsKey(s.TextNumber))
+                    {
+                        oldToNewMap[s.TextNumber] = nextTextNumber++;
+                    }
+                    s.TextNumber = oldToNewMap[s.TextNumber];
                 }
             }
         }
 
         private StringLevel5 GetStringLevel5FromNode(TreeNode node)
         {
-            var nodeTag = node.Tag?.ToString();
-            if (!IsItemNode(nodeTag)) return null;
-
-            TreeNode keyNode = node.Parent;
-
-            if (keyNode == null) return null;
-
-            // Always resolve the real crc32 key from the node's Name, since Text may show a friendly key name
-            int keyIndex = HexToInt(keyNode.Name);
-            if (!Texts.ContainsKey(keyIndex)) return null;
-
-            var textConfig = Texts[keyIndex];
-
-            // The node's position among its siblings maps back to the position in the underlying string list
-            int textIndex = node.Index;
-            return textIndex < textConfig.Strings.Count ? textConfig.Strings[textIndex] : null;
+            if (node == null) return null;
+            if (node.Tag is NodeTagInfo info)
+            {
+                return info.StringRef;
+            }
+            return null;
         }
 
         private TreeNode GetRootNode(TreeNode node)
@@ -321,6 +333,25 @@ namespace Nyanko.UserControls
                 current = current.Parent;
             }
             return current;
+        }
+
+
+        private TreeNode FindKeyNode(TreeNode node)
+        {
+            // Traverse up to find the key node of any given node
+
+            TreeNode current = node;
+
+            while (current != null)
+            {
+                if (IsKeyNode(current.Tag?.ToString()))
+                {
+                    return current;
+                }
+                current = current.Parent;
+            }
+
+            return null;
         }
 
         private ContextMenuStrip GetContextMenuForNode(TreeNode node)
@@ -338,6 +369,13 @@ namespace Nyanko.UserControls
             }
             if (IsItemNode(tag))
             {
+                // If the item represents a variance entry (VarianceKey > 0), show the variance specific context menu
+                var stringLevel5 = GetStringLevel5FromNode(node);
+                if (stringLevel5 != null && stringLevel5.VarianceKey > 0)
+                {
+                    return varianceTextContextMenuStrip;
+                }
+
                 return textItemContextMenuStrip;
             }
             return null;
@@ -474,7 +512,25 @@ namespace Nyanko.UserControls
             var stringLevel5 = GetStringLevel5FromNode(selectedNode);
             if (stringLevel5 != null)
             {
-                stringLevel5.VarianceKey = Convert.ToInt32(activeNum.Text);
+                if (int.TryParse(activeNum.Text, out int newValue))
+                {
+                    TreeNode keyNode = FindKeyNode(selectedNode);
+                    if (keyNode != null)
+                    {
+                        int keyIndex = HexToInt(keyNode.Name);
+                        var existingStrings = Texts[keyIndex].Strings;
+
+                        // Check if the input variance key already exists for this pair of key and text number
+                        bool alreadyExists = existingStrings.Any(s => s != stringLevel5 && s.TextNumber == stringLevel5.TextNumber && s.VarianceKey == newValue);
+                        if (alreadyExists)
+                        {
+                            MessageBox.Show("This variance key already exists for this entry.");
+                            activeNum.Text = stringLevel5.VarianceKey.ToString();
+                            return;
+                        }
+                    }
+                    stringLevel5.VarianceKey = newValue;
+                }
             }
         }
 
@@ -610,10 +666,11 @@ namespace Nyanko.UserControls
                 var stringLevel5 = GetStringLevel5FromNode(selectedNode);
                 if (stringLevel5 != null)
                 {
-                    TreeNode keyNode = selectedNode.Parent;
+                    TreeNode keyNode = FindKeyNode(selectedNode);
                     var parentIndex = HexToInt(keyNode.Name);
 
-                    Texts[parentIndex].Strings.Remove(stringLevel5);
+                    // Deletes the base text entry and all of its variance strings from the underlying config
+                    Texts[parentIndex].Strings.RemoveAll(s => s.TextNumber == stringLevel5.TextNumber);
                     ReorganizeTextNumbers(parentIndex);
                     selectedNode.Remove();
                 }
@@ -642,10 +699,11 @@ namespace Nyanko.UserControls
                 string itemTag = GetItemTagFromKeyTag(nodeTag);
                 int keyIndex = HexToInt(selectedNode.Name);
 
-                Texts[keyIndex].Strings.Add(new StringLevel5(selectedNode.Nodes.Count, newText));
+                var newString = new StringLevel5(selectedNode.Nodes.Count, newText);
+                Texts[keyIndex].Strings.Add(newString);
                 ReorganizeTextNumbers(keyIndex);
 
-                TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), itemTag, textItemContextMenuStrip);
+                TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), itemTag, textItemContextMenuStrip, null, newString);
                 selectedNode.Nodes.Add(newTreeNode);
             }
 
@@ -790,7 +848,7 @@ namespace Nyanko.UserControls
             uiUpDownTextBoxVarianceKey.Enabled = true;
             uiUpDownTextBoxVarianceKey.Text = stringLevel5.VarianceKey.ToString();
 
-            TreeNode keyNode = node.Parent;
+            TreeNode keyNode = FindKeyNode(node);
             var parentIndex = HexToInt(keyNode.Name);
             var textConfig = Texts[parentIndex];
 
@@ -839,17 +897,24 @@ namespace Nyanko.UserControls
                     return;
                 }
 
-                TreeNode keyNode = selectedNode.Parent;
+                TreeNode keyNode = FindKeyNode(selectedNode);
                 if (keyNode != null)
                 {
                     int parentIndex = HexToInt(keyNode.Name);
-                    int insertIndex = selectedNode.Index + 1;
+
+                    // In a nested structure, find the index of the base item node relative to the KeyNode
+                    TreeNode topItemNode = selectedNode;
+                    while (topItemNode.Parent != null && IsItemNode(topItemNode.Parent.Tag?.ToString()))
+                    {
+                        topItemNode = topItemNode.Parent;
+                    }
+                    int insertIndex = topItemNode.Index + 1;
 
                     var stringLevel5 = new StringLevel5(0, newText);
                     Texts[parentIndex].Strings.Insert(insertIndex, stringLevel5);
                     ReorganizeTextNumbers(parentIndex);
 
-                    TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), nodeTag, textItemContextMenuStrip);
+                    TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), nodeTag, textItemContextMenuStrip, null, stringLevel5);
                     keyNode.Nodes.Insert(insertIndex, newTreeNode);
                 }
             }
@@ -873,18 +938,141 @@ namespace Nyanko.UserControls
                     return;
                 }
 
-                TreeNode keyNode = selectedNode.Parent;
+                TreeNode keyNode = FindKeyNode(selectedNode);
                 if (keyNode != null)
                 {
                     int parentIndex = HexToInt(keyNode.Name);
-                    int insertIndex = selectedNode.Index;
+
+                    // In a nested structure, find the index of the base item node relative to the KeyNode
+                    TreeNode topItemNode = selectedNode;
+                    while (topItemNode.Parent != null && IsItemNode(topItemNode.Parent.Tag?.ToString()))
+                    {
+                        topItemNode = topItemNode.Parent;
+                    }
+                    int insertIndex = topItemNode.Index;
 
                     var stringLevel5 = new StringLevel5(0, newText);
                     Texts[parentIndex].Strings.Insert(insertIndex, stringLevel5);
                     ReorganizeTextNumbers(parentIndex);
 
-                    TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), nodeTag, textItemContextMenuStrip);
+                    TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), nodeTag, textItemContextMenuStrip, null, stringLevel5);
                     keyNode.Nodes.Insert(insertIndex, newTreeNode);
+                }
+            }
+
+            SelectedRightClickTreeNode = null;
+        }
+
+        private void InsertVarianceTextToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (SelectedRightClickTreeNode == null) return;
+
+            TreeNode selectedNode = SelectedRightClickTreeNode;
+            var parentString = GetStringLevel5FromNode(selectedNode);
+            if (parentString == null)
+            {
+                SelectedRightClickTreeNode = null;
+                return;
+            }
+
+            TreeNode keyNode = FindKeyNode(selectedNode);
+            if (keyNode == null)
+            {
+                SelectedRightClickTreeNode = null;
+                return;
+            }
+
+            string newText = Interaction.InputBox("Enter text:");
+            if (string.IsNullOrEmpty(newText))
+            {
+                SelectedRightClickTreeNode = null;
+                return;
+            }
+
+            int keyIndex = HexToInt(keyNode.Name);
+            var existingStrings = Texts[keyIndex].Strings;
+
+            // Find the lowest unused variance key strictly higher than the parent node's variance key
+            int targetVarianceKey = parentString.VarianceKey + 1;
+            while (existingStrings.Any(s => s.TextNumber == parentString.TextNumber && s.VarianceKey == targetVarianceKey))
+            {
+                targetVarianceKey++;
+            }
+
+            var newString = new StringLevel5(parentString.TextNumber, newText, targetVarianceKey);
+
+            // Locate the position in the flat collection list to append the new variance under the same group
+            int parentIndexInList = existingStrings.IndexOf(parentString);
+            if (parentIndexInList != -1)
+            {
+                int insertPos = parentIndexInList;
+                for (int i = parentIndexInList + 1; i < existingStrings.Count; i++)
+                {
+                    if (existingStrings[i].TextNumber == parentString.TextNumber)
+                    {
+                        insertPos = i;
+                    }
+                }
+                existingStrings.Insert(insertPos + 1, newString);
+            }
+            else
+            {
+                existingStrings.Add(newString);
+            }
+
+            ReorganizeTextNumbers(keyIndex);
+
+            // Locate or determine the base node at the root level of the text items
+            TreeNode baseNode = selectedNode;
+            while (baseNode.Parent != null && IsItemNode(baseNode.Parent.Tag?.ToString()))
+            {
+                baseNode = baseNode.Parent;
+            }
+
+            string itemTag = GetItemTagFromKeyTag(keyNode.Tag?.ToString());
+            TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), itemTag, textItemContextMenuStrip, null, newString);
+            baseNode.Nodes.Add(newTreeNode);
+            baseNode.Expand();
+
+            SelectedRightClickTreeNode = null;
+        }
+
+        private void RemoveVarianceTextToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (SelectedRightClickTreeNode == null) return;
+
+            TreeNode selectedNode = SelectedRightClickTreeNode;
+            var stringLevel5 = GetStringLevel5FromNode(selectedNode);
+
+            if (stringLevel5 != null)
+            {
+                if (stringLevel5.VarianceKey == 0)
+                {
+                    MessageBox.Show("This is the base text. To delete it, please use 'Remove Text'.");
+                    SelectedRightClickTreeNode = null;
+                    return;
+                }
+
+                DialogResult result = MessageBox.Show(
+                    "Are you sure you want to delete this variance entry?",
+                    "Confirm Delete",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning
+                );
+
+                if (result != DialogResult.Yes)
+                {
+                    SelectedRightClickTreeNode = null;
+                    return;
+                }
+
+                TreeNode keyNode = FindKeyNode(selectedNode);
+                if (keyNode != null)
+                {
+                    int parentIndex = HexToInt(keyNode.Name);
+                    Texts[parentIndex].Strings.Remove(stringLevel5);
+                    ReorganizeTextNumbers(parentIndex);
+                    selectedNode.Remove();
                 }
             }
 
@@ -909,8 +1097,16 @@ namespace Nyanko.UserControls
             if (e.Button == MouseButtons.Left)
             {
                 TreeNode draggedNode = e.Item as TreeNode;
+
                 if (draggedNode != null && IsItemNode(draggedNode.Tag?.ToString()))
                 {
+                    // Block variance entries from being dragged
+                    var stringLevel5 = GetStringLevel5FromNode(draggedNode);
+                    if (stringLevel5 != null && stringLevel5.VarianceKey > 0)
+                    {
+                        return;
+                    }
+
                     DoDragDrop(draggedNode, DragDropEffects.Move);
                 }
             }
@@ -979,8 +1175,15 @@ namespace Nyanko.UserControls
             }
             else if (IsItemNode(targetTag))
             {
-                targetKeyNode = targetNode.Parent;
-                insertIndex = targetNode.Index;
+                targetKeyNode = FindKeyNode(targetNode);
+
+                // Resolve insertion relative to the top-level parent base node
+                TreeNode topItemNode = targetNode;
+                while (topItemNode.Parent != null && IsItemNode(topItemNode.Parent.Tag?.ToString()))
+                {
+                    topItemNode = topItemNode.Parent;
+                }
+                insertIndex = topItemNode != null ? topItemNode.Index : 0;
             }
 
             if (targetKeyNode == null) return;

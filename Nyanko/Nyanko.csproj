@@ -65,6 +65,7 @@
     <Compile Include="Common\CharacterInfo.cs" />
     <Compile Include="Common\Encoders.cs" />
     <Compile Include="Common\EntryType.cs" />
+    <Compile Include="Common\NodeTagInfo.cs" />
     <Compile Include="Common\Speakers.cs" />
     <Compile Include="Forms\GenerateCRC32Window.cs">
       <SubType>Form</SubType>

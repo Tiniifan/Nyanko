@@ -59,6 +59,9 @@
             this.uiLabelResult = new Sunny.UI.UILabel();
             this.uiTextBoxSearch = new Sunny.UI.UITextBox();
             this.uiLabelSearch = new Sunny.UI.UILabel();
+            this.insertVarianceTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.varianceTextContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.removeVarianceTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.uiGroupBoxAttachCharacter.SuspendLayout();
             this.uiPanelSettings.SuspendLayout();
             this.uiGroupBoxText.SuspendLayout();
@@ -69,6 +72,7 @@
             this.textItemContextMenuStrip.SuspendLayout();
             this.textTypeContextMenuStrip.SuspendLayout();
             this.uiPanelFooter.SuspendLayout();
+            this.varianceTextContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // uiGroupBoxAttachCharacter
@@ -362,28 +366,29 @@
             this.textItemContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.insertTextAfterToolStripMenuItem,
             this.insertTextBeforeToolStripMenuItem,
+            this.insertVarianceTextToolStripMenuItem,
             this.removeTextToolStripMenuItem});
             this.textItemContextMenuStrip.Name = "textItemContextMenuStrip";
-            this.textItemContextMenuStrip.Size = new System.Drawing.Size(165, 70);
+            this.textItemContextMenuStrip.Size = new System.Drawing.Size(175, 92);
             // 
             // insertTextAfterToolStripMenuItem
             // 
             this.insertTextAfterToolStripMenuItem.Name = "insertTextAfterToolStripMenuItem";
-            this.insertTextAfterToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.insertTextAfterToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
             this.insertTextAfterToolStripMenuItem.Text = "Insert Text After";
             this.insertTextAfterToolStripMenuItem.Click += new System.EventHandler(this.InsertTextAfterToolStripMenuItem_Click);
             // 
             // insertTextBeforeToolStripMenuItem
             // 
             this.insertTextBeforeToolStripMenuItem.Name = "insertTextBeforeToolStripMenuItem";
-            this.insertTextBeforeToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.insertTextBeforeToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
             this.insertTextBeforeToolStripMenuItem.Text = "Insert Text Before";
             this.insertTextBeforeToolStripMenuItem.Click += new System.EventHandler(this.InsertTextBeforeToolStripMenuItem_Click);
             // 
             // removeTextToolStripMenuItem
             // 
             this.removeTextToolStripMenuItem.Name = "removeTextToolStripMenuItem";
-            this.removeTextToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.removeTextToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
             this.removeTextToolStripMenuItem.Text = "Remove Text";
             this.removeTextToolStripMenuItem.Click += new System.EventHandler(this.RemoveTextToolStripMenuItem_Click);
             // 
@@ -460,6 +465,27 @@
             this.uiLabelSearch.TabIndex = 0;
             this.uiLabelSearch.Text = "Search";
             // 
+            // insertVarianceTextToolStripMenuItem
+            // 
+            this.insertVarianceTextToolStripMenuItem.Name = "insertVarianceTextToolStripMenuItem";
+            this.insertVarianceTextToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
+            this.insertVarianceTextToolStripMenuItem.Text = "Insert Variance Text";
+            this.insertVarianceTextToolStripMenuItem.Click += new System.EventHandler(this.InsertVarianceTextToolStripMenuItem_Click);
+            // 
+            // varianceTextContextMenuStrip
+            // 
+            this.varianceTextContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.removeVarianceTextToolStripMenuItem});
+            this.varianceTextContextMenuStrip.Name = "contextMenuStrip1";
+            this.varianceTextContextMenuStrip.Size = new System.Drawing.Size(181, 48);
+            // 
+            // removeVarianceTextToolStripMenuItem
+            // 
+            this.removeVarianceTextToolStripMenuItem.Name = "removeVarianceTextToolStripMenuItem";
+            this.removeVarianceTextToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.removeVarianceTextToolStripMenuItem.Text = "Remove Text";
+            this.removeVarianceTextToolStripMenuItem.Click += new System.EventHandler(this.RemoveVarianceTextToolStripMenuItem_Click);
+            // 
             // String5UserControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -479,6 +505,7 @@
             this.textItemContextMenuStrip.ResumeLayout(false);
             this.textTypeContextMenuStrip.ResumeLayout(false);
             this.uiPanelFooter.ResumeLayout(false);
+            this.varianceTextContextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -514,5 +541,8 @@
         private Sunny.UI.UILabel uiLabelSearch;
         private Sunny.UI.UILabel uiLabelSpeaker;
         private Sunny.UI.UIComboBox uiComboBoxSpeaker;
+        private System.Windows.Forms.ToolStripMenuItem insertVarianceTextToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip varianceTextContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem removeVarianceTextToolStripMenuItem;
     }
 }

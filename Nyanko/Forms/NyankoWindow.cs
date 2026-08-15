@@ -571,6 +571,28 @@ namespace Nyanko.Forms
             itemNode.EnsureVisible();
         }
 
+        private void FilterFirstOccurrences(Dictionary<int, TextConfig> dict)
+        {
+            // Filters out subsequent text variance occurrences to retain only the first one
+
+            if (dict == null) return;
+
+            foreach (var kvp in dict)
+            {
+                if (kvp.Value?.Strings == null) continue;
+                var uniqueStrings = new List<StringLevel5>();
+                var seenTextNumbers = new HashSet<int>();
+                foreach (var s in kvp.Value.Strings)
+                {
+                    if (seenTextNumbers.Add(s.TextNumber))
+                    {
+                        uniqueStrings.Add(s);
+                    }
+                }
+                kvp.Value.Strings = uniqueStrings;
+            }
+        }
+
         #endregion
 
         #region Events
@@ -688,6 +710,14 @@ namespace Nyanko.Forms
                 Properties.Settings.Default.saveKeys = saveFileDialog.SaveKeysList;
                 Properties.Settings.Default.Save();
 
+                // If user chose not to support variance keys, filter out non-first occurrences
+                if (!saveFileDialog.VarianceKeySupport)
+                {
+                    FilterFirstOccurrences(T2bþFileOpened.Texts);
+                    FilterFirstOccurrences(T2bþFileOpened.Nouns);
+                    FilterFirstOccurrences(T2bþFileOpened.TextsDebug);
+                }
+
                 if (saveFileDialog.FilterIndex == 1)
                 {
                     T2bþFileOpened.Save(saveFileName, false, saveFileDialog.VarianceKeySupport, saveFileDialog.SaveKeysList);
@@ -716,6 +746,11 @@ namespace Nyanko.Forms
             // then a confirmation message box is shown.
 
             if (T2bþFileOpened == null) return;
+
+            // Keep only the first occurrence for each entry since locked save format does not handle variances
+            FilterFirstOccurrences(T2bþFileOpened.Texts);
+            FilterFirstOccurrences(T2bþFileOpened.Nouns);
+            FilterFirstOccurrences(T2bþFileOpened.TextsDebug);
 
             string directory = Path.GetDirectoryName(openFileDialog1.FileName) ?? string.Empty;
             string baseName = RemoveAllExtensionsWithRegex(Path.GetFileName(openFileDialog1.FileName));
