@@ -236,4 +236,10 @@ Nyanko.exe test.cfg.bin --goto text ev10 1
 
 ---
 
+**Credits**
+
+* [SunnyUI](https://github.com/yhuse/SunnyUI) - Used under the GPL-3.0 license for the user interface components and layout.
+
+---
+
 [Direct Download Link](https://github.com/Tiniifan/Nyanko/releases/latest/download/Nyanko.exe)
