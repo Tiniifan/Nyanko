@@ -187,14 +187,10 @@ namespace Nyanko.UserControls
                     {
                         uiComboBoxCharacter.Items.Add(character);
                     }
-
-                    uiComboBoxCharacter.Enabled = true;
-                }
-                else
-                {
-                    uiComboBoxCharacter.Enabled = false;
                 }
             }
+
+            uiComboBoxCharacter.Enabled = Characters != null && Characters.Count > 0;
         }
 
         private void ModelComboBox_SelectedIndex(UIComboBox combobox, int keyToFind)
@@ -615,6 +611,9 @@ namespace Nyanko.UserControls
             TreeNode newTreeNode = CreateNode(keyDisplayName, GetKeyTag(), textKeyContextMenuStrip, crc32.ToString("X8"));
             rootNode.Nodes.Add(newTreeNode);
 
+            rootNode.Expand();
+            uiTreeViewText.SelectedNode = newTreeNode;
+
             SelectedRightClickTreeNode = null;
         }
 
@@ -705,6 +704,9 @@ namespace Nyanko.UserControls
 
                 TreeNode newTreeNode = CreateNode(CleanTextForNode(newText), itemTag, textItemContextMenuStrip, null, newString);
                 selectedNode.Nodes.Add(newTreeNode);
+
+                selectedNode.Expand();
+                uiTreeViewText.SelectedNode = newTreeNode;
             }
 
             SelectedRightClickTreeNode = null;

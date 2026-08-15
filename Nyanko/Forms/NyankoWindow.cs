@@ -616,6 +616,10 @@ namespace Nyanko.Forms
 
                 DrawTreeView(newFileName);
 
+                string5UserControlNoun.Enabled = true;
+                string5UserControlText.Enabled = true;
+                string5UserControlDebug.Enabled = true;
+
                 saveToolStripMenuItem.Enabled = true;
                 openFileDialog1.FileName = newFileName;
 
