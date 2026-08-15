@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Collections.Generic;
 using Microsoft.VisualBasic;
-using StudioElevenLib.Level5.Text.Logic;
-using StudioElevenLib.Level5.Text;
 using Sunny.UI;
+using StudioElevenLib.Level5.Text.Logic;
 using Nyanko.Common;
 
 namespace Nyanko.UserControls
@@ -18,9 +13,8 @@ namespace Nyanko.UserControls
     public partial class String5UserControl : UserControl
     {
         private Dictionary<int, TextConfig> Texts;
-
-        // Shared dictionary (crc32 -> friendly key name), injected by NyankoWindow and common to all 3 user controls
         private Dictionary<int, string> Keys;
+        private List<CharacterInfo> Characters;
 
         private TreeNode SelectedRightClickTreeNode;
         private EntryType _entryType;
@@ -37,6 +31,7 @@ namespace Nyanko.UserControls
         public void SetEntryType(EntryType entryType)
         {
             _entryType = entryType;
+
             if (uiGroupBoxAttachCharacter != null)
             {
                 // The character attachment group is only relevant for dialog-based entries, not for nouns
@@ -50,10 +45,14 @@ namespace Nyanko.UserControls
             UpdateTabPageHeader();
         }
 
-        // Injects the shared Keys dictionary (crc32 -> friendly key name) used to display and register key names
         public void SetKeys(Dictionary<int, string> keys)
         {
             Keys = keys;
+        }
+
+        public void SetCharacters(List<CharacterInfo> characters)
+        {
+            Characters = characters;
         }
 
         public void DrawTreeView(string filterText)
@@ -159,37 +158,49 @@ namespace Nyanko.UserControls
 
         private void PopulateCharacterComboBox()
         {
-            if (uiComboBoxCharacter.Items.Count == 0 && Faces.IEGO != null && Faces.IEGO.Count > 0)
+            // Populates the character combo box from the shared Characters list (loaded from characters.txt).
+            // The combo box is only enabled when at least one character is available.
+
+            if (uiComboBoxCharacter.Items.Count == 0)
             {
                 uiComboBoxCharacter.Items.Clear();
 
-                // First entry represents "no character attached", real characters start at index 1
-                uiComboBoxCharacter.Items.Add("No Character attached");
-                foreach (var pair in Faces.IEGO)
+                if (Characters != null && Characters.Count > 0)
                 {
-                    uiComboBoxCharacter.Items.Add(pair);
-                }
+                    // First entry represents "no character attached", real characters start at index 1
+                    uiComboBoxCharacter.Items.Add("No Character attached");
+                    foreach (var character in Characters)
+                    {
+                        uiComboBoxCharacter.Items.Add(character);
+                    }
 
-                uiComboBoxCharacter.DisplayMember = "Value";
-                uiComboBoxCharacter.ValueMember = "Key";
+                    uiComboBoxCharacter.Enabled = true;
+                }
+                else
+                {
+                    uiComboBoxCharacter.Enabled = false;
+                }
             }
         }
 
-        private void ModelComboBox_SelectedIndex(UIComboBox combobox, uint keyToFind)
+        private void ModelComboBox_SelectedIndex(UIComboBox combobox, int keyToFind)
         {
             PopulateCharacterComboBox();
 
             // Start at index 1 to skip the "No Character attached" placeholder entry
             for (int i = 1; i < combobox.Items.Count; i++)
             {
-                if (combobox.Items[i] is KeyValuePair<uint, string> pair && pair.Key == keyToFind)
+                if (combobox.Items[i] is CharacterInfo character && character.Id == keyToFind)
                 {
                     combobox.SelectedIndex = i;
                     return;
                 }
             }
 
-            combobox.SelectedIndex = 0;
+            if (combobox.Items.Count > 0)
+            {
+                combobox.SelectedIndex = 0;
+            }
         }
 
         private string GetKeyTag()
@@ -246,8 +257,6 @@ namespace Nyanko.UserControls
                    source.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        // The optional "name" parameter stores the actual hex crc32 in the node's Name property, separately from the
-        // displayed Text (which can now show a friendly key name instead of the raw hex). Defaults to the text itself.
         private TreeNode CreateNode(string text, string tag, ContextMenuStrip contextMenu, string name = null)
         {
             return new TreeNode(text)
@@ -442,9 +451,9 @@ namespace Nyanko.UserControls
                 // Index 0 is the "No Character attached" placeholder
                 textConfig.WashaID = -1;
             }
-            else if (activeCombo.SelectedItem is KeyValuePair<uint, string> selectedWashaID)
+            else if (activeCombo.SelectedItem is CharacterInfo selectedCharacter)
             {
-                textConfig.WashaID = (int)selectedWashaID.Key;
+                textConfig.WashaID = selectedCharacter.Id;
             }
             else
             {
@@ -787,12 +796,14 @@ namespace Nyanko.UserControls
 
             if (_entryType != EntryType.Noun)
             {
-                uiComboBoxCharacter.Enabled = true;
+                // Populate first: this also resolves the Enabled state based on whether any character was loaded
+                PopulateCharacterComboBox();
+
                 if (textConfig.WashaID != -1)
                 {
-                    ModelComboBox_SelectedIndex(uiComboBoxCharacter, (uint)textConfig.WashaID);
+                    ModelComboBox_SelectedIndex(uiComboBoxCharacter, textConfig.WashaID);
                 }
-                else
+                else if (uiComboBoxCharacter.Items.Count > 0)
                 {
                     uiComboBoxCharacter.SelectedIndex = 0;
                 }

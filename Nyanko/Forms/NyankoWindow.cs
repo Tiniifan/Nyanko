@@ -8,9 +8,10 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
-using Sunny.UI;
 using Microsoft.VisualBasic;
+using Sunny.UI;
 using StudioElevenLib.Level5.Text;
+using StudioElevenLib.Level5.Text.Logic;
 using Nyanko.Common;
 using Nyanko.UserControls;
 
@@ -20,6 +21,10 @@ namespace Nyanko.Forms
     {
         private T2bþ T2bþFileOpened;
         public Dictionary<int, string> Keys { get; set; }
+        public List<CharacterInfo> Characters { get; private set; }
+
+        public bool LockSaveMode { get; private set; }
+        public string LockSaveFormat { get; private set; }
 
         private SearchWindow _searchWindowInstance;
 
@@ -32,8 +37,26 @@ namespace Nyanko.Forms
         public String5UserControl String5UserControlNoun => string5UserControlNoun;
         public String5UserControl String5UserControlDebug => string5UserControlDebug;
 
-        public NyankoWindow()
+        public NyankoWindow() : this(null, false, null, null, null, 0)
         {
+        }
+
+        public NyankoWindow(string initialFilePath) : this(initialFilePath, false, null, null, null, 0)
+        {
+        }
+
+        public NyankoWindow(string initialFilePath, bool lockSaveMode, string lockSaveFormat)
+            : this(initialFilePath, lockSaveMode, lockSaveFormat, null, null, 0)
+        {
+        }
+
+
+        public NyankoWindow(string initialFilePath, bool lockSaveMode, string lockSaveFormat, string gotoType, int? gotoId, int gotoVariance)
+        {
+            // initialFilePath: file to try to open right after startup (from the command line), can be null.
+            // lockSaveMode / lockSaveFormat: when lockSaveMode is true, saving skips the dialog and writes directly using lockSaveFormat.
+            // gotoType / gotoId / gotoVariance: from the "-g" command line argument, selects a specific entry right after opening the file.
+
             InitializeComponent();
 
             Keys = new Dictionary<int, string>();
@@ -47,6 +70,11 @@ namespace Nyanko.Forms
 
             LoadCharacterData();
 
+            // Injects the shared character list into each user control so they can populate their character combo box
+            string5UserControlText.SetCharacters(Characters);
+            string5UserControlNoun.SetCharacters(Characters);
+            string5UserControlDebug.SetCharacters(Characters);
+
             // Initial configuration of types for each user control
             string5UserControlText.SetEntryType(EntryType.Text);
             string5UserControlNoun.SetEntryType(EntryType.Noun);
@@ -55,6 +83,20 @@ namespace Nyanko.Forms
 
             // No file is open yet, so the CRC32 finder has nothing to work against
             cRC32FinderToolStripMenuItem.Enabled = false;
+
+            LockSaveMode = lockSaveMode;
+            LockSaveFormat = lockSaveFormat;
+
+            if (!string.IsNullOrEmpty(initialFilePath))
+            {
+                TryOpenInitialFile(initialFilePath);
+
+                // Only try to jump to the requested entry if the file was actually opened successfully
+                if (T2bþFileOpened != null && gotoType != null && gotoId.HasValue)
+                {
+                    ApplyGotoRequest(gotoType, gotoId.Value, gotoVariance);
+                }
+            }
         }
 
         #region Public Methods
@@ -141,48 +183,63 @@ namespace Nyanko.Forms
 
         private void LoadCharacterData()
         {
+            // Loads characters.txt (ID|Name, first line skipped) into the Characters list.
+            // Duplicate IDs are ignored (only the first occurrence is kept). Duplicate names with different IDs
+            // are all kept, with " (n)" appended to the display name for the n-th occurrence of that name.
+
+            Characters = new List<CharacterInfo>();
+
             string filePath = "characters.txt";
+            if (!File.Exists(filePath)) return;
 
-            if (File.Exists(filePath))
+            var seenIds = new HashSet<int>();
+            var nameOccurrences = new Dictionary<string, int>();
+
+            foreach (var line in File.ReadLines(filePath).Skip(1))
             {
-                foreach (var line in File.ReadLines(filePath).Skip(1))
+                var parts = line.Split('|');
+                if (parts.Length != 2) continue;
+
+                string idText = parts[0].Trim();
+                string name = parts[1].Trim();
+
+                if (string.IsNullOrEmpty(idText) || string.IsNullOrEmpty(name)) continue;
+
+                int id = ParseCharacterId(idText);
+
+                // Skip if this id was already registered, even with a different name
+                if (!seenIds.Add(id)) continue;
+
+                string displayName;
+                int occurrenceCount;
+                if (nameOccurrences.TryGetValue(name, out occurrenceCount))
                 {
-                    var parts = line.Split('|');
-                    if (parts.Length == 2)
-                    {
-                        string hexId = parts[0].Trim();
-                        string name = parts[1].Trim();
-
-                        uint id = ConvertHexToUInt32(hexId);
-
-                        if (!Faces.IEGO.ContainsKey(id))
-                        {
-                            Faces.IEGO[id] = name;
-                        }
-                    }
+                    occurrenceCount++;
+                    nameOccurrences[name] = occurrenceCount;
+                    displayName = $"{name} ({occurrenceCount})";
                 }
+                else
+                {
+                    nameOccurrences[name] = 1;
+                    displayName = name;
+                }
+
+                Characters.Add(new CharacterInfo(id, displayName));
             }
         }
 
-        private uint ConvertHexToUInt32(string hex)
+        private int ParseCharacterId(string idText)
         {
-            if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            // Parses a character ID: either an already-computed crc32 in hex form (e.g. 0x6B87BE96, value taken directly),
+            // or plain text, in which case its crc32 is computed.
+
+            if (idText.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
             {
-                hex = hex.Substring(2);
+                string hexPart = idText.Substring(2);
+                return unchecked((int)Convert.ToUInt32(hexPart, 16));
             }
 
-            if (hex.Length == 8)
-            {
-                byte[] bytes = new byte[4];
-                for (int i = 0; i < 4; i++)
-                {
-                    bytes[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
-                }
-
-                return BitConverter.ToUInt32(bytes.Reverse().ToArray(), 0);
-            }
-
-            throw new FormatException("Incorrect hexadecimal ID format.");
+            return unchecked((int)StudioElevenLib.Tools.Crc32.Compute(Encoding.UTF8.GetBytes(idText)));
         }
 
         private void DrawTreeView(string name)
@@ -240,7 +297,7 @@ namespace Nyanko.Forms
 
             return path;
         }
-     
+
         private TreeNode GetNodeFromPath(TreeView treeView, List<int> path)
         {
             // Resolves a tree node from an index path previously built with GetNodePath
@@ -416,6 +473,104 @@ namespace Nyanko.Forms
             cRC32FinderToolStripMenuItem.Enabled = true;
         }
 
+        private void TryOpenInitialFile(string filePath)
+        {
+            // Tries to open a file passed on the command line. Any unsupported extension or error is silently ignored,
+            // the app just stays in its normal empty state instead of showing an error.
+
+            try
+            {
+                if (!File.Exists(filePath)) return;
+
+                string extension = Path.GetExtension(filePath);
+                if (!string.Equals(extension, ".bin", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(extension, ".txt", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(extension, ".xml", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                openFileDialog1.FileName = filePath;
+                OpenFile(filePath);
+            }
+            catch
+            {
+                // Silently ignore any error opening the file from the command line, the app just starts empty
+                T2bþFileOpened = null;
+            }
+        }
+
+        private void ApplyGotoRequest(string gotoType, int gotoId, int gotoVariance)
+        {
+            // Applies a "-g / --goto" request: if the key exists in the requested type's dictionary, and an entry with
+            // the requested variance key exists, switch to the matching tab page and select the corresponding tree node.
+
+            if (T2bþFileOpened == null) return;
+
+            Dictionary<int, TextConfig> targetDictionary;
+            TabPage targetTabPage;
+            String5UserControl targetUserControl;
+
+            switch (gotoType)
+            {
+                case "d":
+                    targetDictionary = T2bþFileOpened.TextsDebug;
+                    targetTabPage = tabPageDebug;
+                    targetUserControl = string5UserControlDebug;
+                    break;
+
+                case "n":
+                    targetDictionary = T2bþFileOpened.Nouns;
+                    targetTabPage = tabPageNouns;
+                    targetUserControl = string5UserControlNoun;
+                    break;
+
+                case "t":
+                default:
+                    targetDictionary = T2bþFileOpened.Texts;
+                    targetTabPage = tabPageTexts;
+                    targetUserControl = string5UserControlText;
+                    break;
+            }
+
+            if (targetDictionary == null || !targetDictionary.ContainsKey(gotoId)) return;
+
+            TextConfig textConfig = targetDictionary[gotoId];
+
+            // Find the string entry matching the requested variance key (defaults to 0 when not specified)
+            int stringIndex = -1;
+            for (int i = 0; i < textConfig.Strings.Count; i++)
+            {
+                if (textConfig.Strings[i].VarianceKey == gotoVariance)
+                {
+                    stringIndex = i;
+                    break;
+                }
+            }
+
+            if (stringIndex == -1) return;
+
+            uiTabControl1.SelectedTab = targetTabPage;
+
+            TreeView treeView = GetTreeViewFromControl(targetUserControl);
+            if (treeView == null || treeView.Nodes.Count == 0) return;
+
+            // The tree structure is always: root node -> key node -> item nodes
+            TreeNode rootNode = treeView.Nodes[0];
+            string keyHex = gotoId.ToString("X8");
+
+            TreeNode keyNode = rootNode.Nodes.Cast<TreeNode>().FirstOrDefault(n => n.Name == keyHex);
+            if (keyNode == null) return;
+
+            if (stringIndex >= keyNode.Nodes.Count) return;
+
+            keyNode.Expand();
+
+            TreeNode itemNode = keyNode.Nodes[stringIndex];
+            treeView.SelectedNode = itemNode;
+            itemNode.EnsureVisible();
+        }
+
         #endregion
 
         #region Events
@@ -482,6 +637,13 @@ namespace Nyanko.Forms
             // Drop any key from the shared Keys dictionary that no longer has a matching entry before saving
             CleanOrphanKeys();
 
+            if (LockSaveMode)
+            {
+                // Command-line "-l" mode: skip the save dialog entirely and write directly using LockSaveFormat
+                SaveLocked();
+                return;
+            }
+
             SaveFileDialogWithEncoding saveFileDialog = new SaveFileDialogWithEncoding();
 
             saveFileDialog.FileName = Path.GetFileName(openFileDialog1.FileName);
@@ -545,6 +707,43 @@ namespace Nyanko.Forms
 
                 MessageBox.Show("Saved!");
             }
+        }
+
+        private void SaveLocked()
+        {
+            // Direct save used when the app is running in locked mode ("-l" on the command line).
+            // No dialog is shown, the file is written next to the originally opened file using LockSaveFormat,
+            // then a confirmation message box is shown.
+
+            if (T2bþFileOpened == null) return;
+
+            string directory = Path.GetDirectoryName(openFileDialog1.FileName) ?? string.Empty;
+            string baseName = RemoveAllExtensionsWithRegex(Path.GetFileName(openFileDialog1.FileName));
+            string basePath = Path.Combine(directory, baseName);
+
+            switch (LockSaveFormat)
+            {
+                case "bt":
+                    T2bþFileOpened.Encoding = Encoding.UTF8;
+                    T2bþFileOpened.Save(basePath + ".cfg.bin", true, false, false);
+                    break;
+
+                case "t":
+                    File.WriteAllLines(basePath + ".txt", T2bþFileOpened.ExportToTxt());
+                    break;
+
+                case "x":
+                    File.WriteAllLines(basePath + ".xml", T2bþFileOpened.ExportToXML());
+                    break;
+
+                case "b":
+                default:
+                    T2bþFileOpened.Encoding = Encoding.UTF8;
+                    T2bþFileOpened.Save(basePath + ".cfg.bin", false, false, false);
+                    break;
+            }
+
+            MessageBox.Show("Saved!");
         }
 
         private void SearchToolStripMenuItem_Click(object sender, EventArgs e)
