@@ -21,12 +21,26 @@ namespace Nyanko.UserControls
         private EntryType _entryType;
         private bool _isProgrammaticChange = false;
 
+        private Timer _debounceTimer;
+
         public UITreeView TreeViewText => uiTreeViewText;
 
         public String5UserControl()
         {
             InitializeComponent();
+            InitializeDebounceTimer();
         }
+
+        #region Private Initialization
+
+        private void InitializeDebounceTimer()
+        {
+            _debounceTimer = new Timer();
+            _debounceTimer.Interval = 400; // 400ms sweet spot to prevent lag while typing
+            _debounceTimer.Tick += DebounceTimer_Tick;
+        }
+
+        #endregion
 
         #region Public Methods
 
@@ -466,7 +480,15 @@ namespace Nyanko.UserControls
 
             if (uiRichTextBox1.Text != textContent)
             {
-                uiRichTextBox1.Text = textContent;
+                _isProgrammaticChange = true;
+                try
+                {
+                    uiRichTextBox1.Text = textContent;
+                }
+                finally
+                {
+                    _isProgrammaticChange = false;
+                }
             }
 
             selectedNode.Text = CleanTextForNode(textContent);
@@ -571,7 +593,27 @@ namespace Nyanko.UserControls
 
         private void UiRichTextBox1_TextChanged(object sender, EventArgs e)
         {
-            if (!uiRichTextBox1.Focused || uiTreeViewText.SelectedNode == null) return;
+            if (_isProgrammaticChange) return;
+
+            if (uiTreeViewText.SelectedNode == null) return;
+
+            TreeNode selectedNode = uiTreeViewText.SelectedNode;
+            var nodeTag = selectedNode.Tag?.ToString();
+
+            if (!IsItemNode(nodeTag)) return;
+
+            // Stop the timer and restart it to reset the debounce countdown on every keystroke
+            _debounceTimer.Stop();
+            _debounceTimer.Start();
+        }
+
+        private void DebounceTimer_Tick(object sender, EventArgs e)
+        {
+            // Executed only when the user stops typing after the debounce interval
+
+            _debounceTimer.Stop();
+
+            if (uiTreeViewText.SelectedNode == null) return;
 
             TreeNode selectedNode = uiTreeViewText.SelectedNode;
             var nodeTag = selectedNode.Tag?.ToString();
@@ -849,6 +891,9 @@ namespace Nyanko.UserControls
 
         private void UiTreeViewText_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            // Stop any pending debounce operations when selecting a new node to prevent cross-selection leaks
+            _debounceTimer?.Stop();
+
             var node = e.Node;
             var nodeTag = node.Tag?.ToString();
 
@@ -865,7 +910,15 @@ namespace Nyanko.UserControls
             {
                 // Disable and clear the editing controls when the selection isn't an editable text entry
                 uiRichTextBox1.Enabled = false;
-                uiRichTextBox1.Clear();
+                _isProgrammaticChange = true;
+                try
+                {
+                    uiRichTextBox1.Clear();
+                }
+                finally
+                {
+                    _isProgrammaticChange = false;
+                }
                 uiUpDownTextBoxVarianceKey.Enabled = false;
                 uiUpDownTextBoxVarianceKey.Text = "0";
                 uiComboBoxCharacter.Enabled = false;
@@ -884,7 +937,15 @@ namespace Nyanko.UserControls
 
             // Enable and populate the editing controls with the selected node's data
             uiRichTextBox1.Enabled = true;
-            uiRichTextBox1.Text = stringLevel5.Text;
+            _isProgrammaticChange = true;
+            try
+            {
+                uiRichTextBox1.Text = stringLevel5.Text;
+            }
+            finally
+            {
+                _isProgrammaticChange = false;
+            }
 
             uiUpDownTextBoxVarianceKey.Enabled = true;
             uiUpDownTextBoxVarianceKey.Text = stringLevel5.VarianceKey.ToString();
