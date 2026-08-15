@@ -19,6 +19,7 @@ namespace Nyanko.UserControls
 
         private TreeNode SelectedRightClickTreeNode;
         private EntryType _entryType;
+        private bool _isProgrammaticChange = false;
 
         public UITreeView TreeViewText => uiTreeViewText;
 
@@ -197,19 +198,27 @@ namespace Nyanko.UserControls
         {
             PopulateCharacterComboBox();
 
-            // Start at index 1 to skip the "No Character attached" placeholder entry
-            for (int i = 1; i < combobox.Items.Count; i++)
+            _isProgrammaticChange = true;
+            try
             {
-                if (combobox.Items[i] is CharacterInfo character && character.Id == keyToFind)
+                // Start at index 1 to skip the "No Character attached" placeholder entry
+                for (int i = 1; i < combobox.Items.Count; i++)
                 {
-                    combobox.SelectedIndex = i;
-                    return;
+                    if (combobox.Items[i] is CharacterInfo character && character.Id == keyToFind)
+                    {
+                        combobox.SelectedIndex = i;
+                        return;
+                    }
+                }
+
+                if (combobox.Items.Count > 0)
+                {
+                    combobox.SelectedIndex = 0;
                 }
             }
-
-            if (combobox.Items.Count > 0)
+            finally
             {
-                combobox.SelectedIndex = 0;
+                _isProgrammaticChange = false;
             }
         }
 
@@ -405,13 +414,21 @@ namespace Nyanko.UserControls
                     detectedType = SpeakerType.Narrator;
             }
 
-            for (int i = 0; i < uiComboBoxSpeaker.Items.Count; i++)
+            _isProgrammaticChange = true;
+            try
             {
-                if (uiComboBoxSpeaker.Items[i] is SpeakerInfo info && info.Type == detectedType)
+                for (int i = 0; i < uiComboBoxSpeaker.Items.Count; i++)
                 {
-                    uiComboBoxSpeaker.SelectedIndex = i;
-                    break;
+                    if (uiComboBoxSpeaker.Items[i] is SpeakerInfo info && info.Type == detectedType)
+                    {
+                        uiComboBoxSpeaker.SelectedIndex = i;
+                        break;
+                    }
                 }
+            }
+            finally
+            {
+                _isProgrammaticChange = false;
             }
         }
 
@@ -455,6 +472,27 @@ namespace Nyanko.UserControls
             selectedNode.Text = CleanTextForNode(textContent);
         }
 
+        private CharacterInfo ResolveSelectedCharacter(UIComboBox combobox)
+        {
+            // Normal case: SelectedItem is already the correct object
+            if (combobox.SelectedItem is CharacterInfo character)
+            {
+                return character;
+            }
+
+            // "Filter mode" case: SelectedItem (or Text) is a string corresponding
+            // to the displayed name(CharacterInfo.ToString() == Name)
+            string displayText = combobox.SelectedItem as string ?? combobox.Text;
+
+            if (string.IsNullOrEmpty(displayText) || displayText == "No Character attached")
+            {
+                return null;
+            }
+
+            return Characters?.FirstOrDefault(c =>
+                string.Equals(c.Name, displayText, StringComparison.Ordinal));
+        }
+
         #endregion
 
         #region Events
@@ -465,39 +503,40 @@ namespace Nyanko.UserControls
             UpdateTabPageHeader();
         }
 
-        private void UiComboBoxCharacter_SelectedIndexChanged(object sender, EventArgs e)
+        private void uiComboBoxCharacter_SelectedValueChanged(object sender, EventArgs e)
         {
-            ComboBox activeCombo = sender as ComboBox;
+            if (_isProgrammaticChange) return;
 
-            if (activeCombo == null || !activeCombo.Focused || activeCombo.SelectedIndex == -1) return;
+            UIComboBox activeCombo = sender as UIComboBox;
+            if (activeCombo == null) return;
 
             TreeNode selectedNode = uiTreeViewText.SelectedNode;
             if (selectedNode == null || !IsItemNode(selectedNode.Tag?.ToString())) return;
 
             TreeNode keyNode = selectedNode.Parent;
-
             if (keyNode == null) return;
 
             TextConfig textConfig = Texts[HexToInt(keyNode.Name)];
 
-            if (activeCombo.SelectedIndex == 0)
-            {
-                // Index 0 is the "No Character attached" placeholder
-                textConfig.WashaID = -1;
-            }
-            else if (activeCombo.SelectedItem is CharacterInfo selectedCharacter)
-            {
-                textConfig.WashaID = selectedCharacter.Id;
-            }
-            else
-            {
-                textConfig.WashaID = -1;
-            }
+            CharacterInfo resolvedCharacter = ResolveSelectedCharacter(activeCombo);
+
+            textConfig.WashaID = resolvedCharacter?.Id ?? -1;
+        }
+
+        private void UiComboBoxCharacter_Enter(object sender, EventArgs e)
+        {
+            uiComboBoxCharacter.ShowFilter = true;
+        }
+
+        private void UiComboBoxCharacter_Leave(object sender, EventArgs e)
+        {
+            uiComboBoxCharacter.ShowFilter = false;
         }
 
         private void UiUpDownTextBoxVarianceKey_TextChanged(object sender, EventArgs e)
         {
             UIUpDownTextBox activeNum = sender as UIUpDownTextBox;
+
             if (activeNum == null || !activeNum.Focused || uiTreeViewText.SelectedNode == null) return;
 
             TreeNode selectedNode = uiTreeViewText.SelectedNode;
@@ -865,7 +904,15 @@ namespace Nyanko.UserControls
                 }
                 else if (uiComboBoxCharacter.Items.Count > 0)
                 {
-                    uiComboBoxCharacter.SelectedIndex = 0;
+                    _isProgrammaticChange = true;
+                    try
+                    {
+                        uiComboBoxCharacter.SelectedIndex = 0;
+                    }
+                    finally
+                    {
+                        _isProgrammaticChange = false;
+                    }
                 }
             }
             else
@@ -1090,7 +1137,8 @@ namespace Nyanko.UserControls
 
         private void UiComboBoxSpeaker_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (uiComboBoxSpeaker == null || !uiComboBoxSpeaker.Focused || uiTreeViewText.SelectedNode == null) return;
+            if (_isProgrammaticChange) return;
+            if (uiComboBoxSpeaker == null || uiTreeViewText.SelectedNode == null) return;
             UpdateTextContentForSpeaker();
         }
 

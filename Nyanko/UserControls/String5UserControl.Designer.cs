@@ -52,6 +52,7 @@
             this.textItemContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.insertTextAfterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.insertTextBeforeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.insertVarianceTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textTypeContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -59,7 +60,6 @@
             this.uiLabelResult = new Sunny.UI.UILabel();
             this.uiTextBoxSearch = new Sunny.UI.UITextBox();
             this.uiLabelSearch = new Sunny.UI.UILabel();
-            this.insertVarianceTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.varianceTextContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.removeVarianceTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.uiGroupBoxAttachCharacter.SuspendLayout();
@@ -129,6 +129,7 @@
             // 
             this.uiComboBoxCharacter.DataSource = null;
             this.uiComboBoxCharacter.FillColor = System.Drawing.Color.White;
+            this.uiComboBoxCharacter.FilterIgnoreCase = true;
             this.uiComboBoxCharacter.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.uiComboBoxCharacter.ItemHoverColor = System.Drawing.SystemColors.ControlLight;
             this.uiComboBoxCharacter.ItemRectColor = System.Drawing.Color.Black;
@@ -146,8 +147,11 @@
             this.uiComboBoxCharacter.SymbolSize = 24;
             this.uiComboBoxCharacter.TabIndex = 1;
             this.uiComboBoxCharacter.TextAlignment = System.Drawing.ContentAlignment.MiddleLeft;
+            this.uiComboBoxCharacter.TrimFilter = true;
             this.uiComboBoxCharacter.Watermark = "";
-            this.uiComboBoxCharacter.SelectedIndexChanged += new System.EventHandler(this.UiComboBoxCharacter_SelectedIndexChanged);
+            this.uiComboBoxCharacter.SelectedValueChanged += new System.EventHandler(this.uiComboBoxCharacter_SelectedValueChanged);
+            this.uiComboBoxCharacter.Enter += new System.EventHandler(this.UiComboBoxCharacter_Enter);
+            this.uiComboBoxCharacter.Leave += new System.EventHandler(this.UiComboBoxCharacter_Leave);
             // 
             // uiLabelCharacter
             // 
@@ -385,6 +389,13 @@
             this.insertTextBeforeToolStripMenuItem.Text = "Insert Text Before";
             this.insertTextBeforeToolStripMenuItem.Click += new System.EventHandler(this.InsertTextBeforeToolStripMenuItem_Click);
             // 
+            // insertVarianceTextToolStripMenuItem
+            // 
+            this.insertVarianceTextToolStripMenuItem.Name = "insertVarianceTextToolStripMenuItem";
+            this.insertVarianceTextToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
+            this.insertVarianceTextToolStripMenuItem.Text = "Insert Variance Text";
+            this.insertVarianceTextToolStripMenuItem.Click += new System.EventHandler(this.InsertVarianceTextToolStripMenuItem_Click);
+            // 
             // removeTextToolStripMenuItem
             // 
             this.removeTextToolStripMenuItem.Name = "removeTextToolStripMenuItem";
@@ -465,24 +476,17 @@
             this.uiLabelSearch.TabIndex = 0;
             this.uiLabelSearch.Text = "Search";
             // 
-            // insertVarianceTextToolStripMenuItem
-            // 
-            this.insertVarianceTextToolStripMenuItem.Name = "insertVarianceTextToolStripMenuItem";
-            this.insertVarianceTextToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
-            this.insertVarianceTextToolStripMenuItem.Text = "Insert Variance Text";
-            this.insertVarianceTextToolStripMenuItem.Click += new System.EventHandler(this.InsertVarianceTextToolStripMenuItem_Click);
-            // 
             // varianceTextContextMenuStrip
             // 
             this.varianceTextContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.removeVarianceTextToolStripMenuItem});
             this.varianceTextContextMenuStrip.Name = "contextMenuStrip1";
-            this.varianceTextContextMenuStrip.Size = new System.Drawing.Size(181, 48);
+            this.varianceTextContextMenuStrip.Size = new System.Drawing.Size(142, 26);
             // 
             // removeVarianceTextToolStripMenuItem
             // 
             this.removeVarianceTextToolStripMenuItem.Name = "removeVarianceTextToolStripMenuItem";
-            this.removeVarianceTextToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.removeVarianceTextToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
             this.removeVarianceTextToolStripMenuItem.Text = "Remove Text";
             this.removeVarianceTextToolStripMenuItem.Click += new System.EventHandler(this.RemoveVarianceTextToolStripMenuItem_Click);
             // 
