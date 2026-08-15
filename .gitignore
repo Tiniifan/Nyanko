@@ -1,4 +1,3 @@
-
 .vs/
 Nyanko/obj/
 Nyanko/bin/Debug/*.bin
@@ -11,3 +10,5 @@ Nyanko/bin/Release/*.zip
 Nyanko/bin/Release/*.rar
 Nyanko/bin/Release/*.xml
 Nyanko/bin/Release/*.txt
+packages/
+*.cfg.bin
