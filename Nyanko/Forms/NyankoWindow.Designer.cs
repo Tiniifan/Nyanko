@@ -36,6 +36,7 @@
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cRC32FinderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.expandAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.collapseAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.batchConvertToToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -55,7 +56,6 @@
             this.string5UserControlText = new Nyanko.UserControls.String5UserControl();
             this.tabPageDebug = new System.Windows.Forms.TabPage();
             this.string5UserControlDebug = new Nyanko.UserControls.String5UserControl();
-            this.cRC32FinderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStripOption.SuspendLayout();
             this.uiPanelHeader.SuspendLayout();
             this.uiPanelContent.SuspendLayout();
@@ -76,7 +76,7 @@
             this.batchConvertToToolStripMenuItem});
             this.menuStripOption.Location = new System.Drawing.Point(0, 8);
             this.menuStripOption.Name = "menuStripOption";
-            this.menuStripOption.Size = new System.Drawing.Size(347, 27);
+            this.menuStripOption.Size = new System.Drawing.Size(227, 27);
             this.menuStripOption.TabIndex = 0;
             this.menuStripOption.Text = "menuStripOption";
             // 
@@ -94,7 +94,7 @@
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 24);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(164, 24);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
             // 
@@ -102,7 +102,7 @@
             // 
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
             this.newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 24);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(164, 24);
             this.newToolStripMenuItem.Text = "New";
             this.newToolStripMenuItem.Click += new System.EventHandler(this.NewToolStripMenuItem_Click);
             // 
@@ -111,7 +111,7 @@
             this.saveToolStripMenuItem.Enabled = false;
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 24);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(164, 24);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
@@ -133,6 +133,14 @@
             this.searchToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
             this.searchToolStripMenuItem.Text = "Search";
             this.searchToolStripMenuItem.Click += new System.EventHandler(this.SearchToolStripMenuItem_Click);
+            // 
+            // cRC32FinderToolStripMenuItem
+            // 
+            this.cRC32FinderToolStripMenuItem.Name = "cRC32FinderToolStripMenuItem";
+            this.cRC32FinderToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.G)));
+            this.cRC32FinderToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
+            this.cRC32FinderToolStripMenuItem.Text = "CRC32 Finder";
+            this.cRC32FinderToolStripMenuItem.Click += new System.EventHandler(this.CRC32FinderToolStripMenuItem_Click);
             // 
             // expandAllToolStripMenuItem
             // 
@@ -379,14 +387,6 @@
             this.string5UserControlDebug.Name = "string5UserControlDebug";
             this.string5UserControlDebug.Size = new System.Drawing.Size(892, 516);
             this.string5UserControlDebug.TabIndex = 10;
-            // 
-            // cRC32FinderToolStripMenuItem
-            // 
-            this.cRC32FinderToolStripMenuItem.Name = "cRC32FinderToolStripMenuItem";
-            this.cRC32FinderToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.G)));
-            this.cRC32FinderToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
-            this.cRC32FinderToolStripMenuItem.Text = "CRC32 Finder";
-            this.cRC32FinderToolStripMenuItem.Click += new System.EventHandler(this.CRC32FinderToolStripMenuItem_Click);
             // 
             // NyankoWindow
             // 
